@@ -54,7 +54,10 @@
             <div id="content-1" class="tab-content max-w-5xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-semibold">Portfolio</h2>
-                    ${isFullMode ? `<button onclick="showAddProjectForm()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-indigo-700">+ New Project</button>` : ''}
+                    <button onclick="showAddProjectForm()" 
+                            class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-indigo-700 ${isFullMode ? '' : 'hidden'}">
+                        + New Project
+                    </button>
                 </div>
                 <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
@@ -89,8 +92,8 @@
     </div>
 
     <script>
-        const firebaseConfig = window.firebaseConfig;
-        firebase.initializeApp(firebaseConfig);
+        // Use the config from config.js (do not re-declare)
+        firebase.initializeApp(window.firebaseConfig);
         const db = firebase.firestore();
 
         const isFullMode = new URLSearchParams(window.location.search).get('full') === 'true';
@@ -113,7 +116,7 @@
             if (active) active.classList.add('active');
         }
 
-        // Tasks
+        // Tasks, Portfolio, etc. (your functions remain the same)
         let tasks = [];
         async function loadTasks() {
             try {
@@ -157,7 +160,7 @@
             renderTasks();
         }
 
-        // Portfolio
+        // Portfolio (same as before)
         let portfolioItems = [];
         async function loadPortfolio() {
             try {
