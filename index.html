@@ -6,6 +6,9 @@
     <title>Elly Okinyo - Personal Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
@@ -66,13 +69,13 @@
                 </div>
                 <div class="bg-white rounded-3xl p-8 shadow-sm border">
                     <h3 class="font-semibold text-lg mb-4">Professional Summary</h3>
-                    <p class="text-slate-600">Passionate about building useful tools and solving problems. Open to new opportunities.</p>
+                    <p class="text-slate-600 leading-relaxed">Passionate about building useful tools and solving problems. Open to opportunities.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Add Project Modal -->
+    <!-- Project Modal -->
     <div id="project-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
         <div class="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
             <h3 class="font-semibold mb-6">Add New Project</h3>
@@ -80,13 +83,18 @@
             <textarea id="proj-desc" class="w-full border rounded-2xl px-4 py-3 h-28" placeholder="Short description..."></textarea>
             <div class="flex gap-4 mt-8">
                 <button onclick="hideProjectModal()" class="flex-1 py-3 border rounded-2xl">Cancel</button>
-                <button onclick="saveNewProject()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl">Save</button>
+                <button onclick="saveNewProject()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl">Save Project</button>
             </div>
         </div>
     </div>
 
     <script>
+        const firebaseConfig = window.firebaseConfig;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         const isFullMode = new URLSearchParams(window.location.search).get('full') === 'true';
+        const userId = "elly-okinyo";
 
         function renderNav() {
             const nav = document.getElementById('nav-container');
@@ -101,18 +109,27 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`content-${n}`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const activeNav = document.getElementById(`nav-${n}`);
-            if (activeNav) activeNav.classList.add('active');
+            const active = document.getElementById(`nav-${n}`);
+            if (active) active.classList.add('active');
         }
 
         // Tasks
         let tasks = [];
-        function loadTasks() {
-            const saved = localStorage.getItem('tasks');
-            tasks = saved ? JSON.parse(saved) : [{id: Date.now(), text: "Sample task - add more!", dueDate: "2026-07-25", priority: "medium", completed: false}];
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks').doc(userId).get();
+                tasks = snapshot.exists ? snapshot.data().items || [] : [];
+            } catch(e) {
+                console.error("Firebase error, using local fallback", e);
+            }
+            if (tasks.length === 0) tasks = [{id: Date.now(), text: "Welcome! Add your first task", dueDate: "2026-07-25", priority: "medium", completed: false}];
             renderTasks();
         }
-        function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+        async function saveTasks() {
+            try {
+                await db.collection('tasks').doc(userId).set({items: tasks});
+            } catch(e) { console.error(e); }
+        }
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             container.innerHTML = tasks.map(t => `
@@ -142,12 +159,19 @@
 
         // Portfolio
         let portfolioItems = [];
-        function loadPortfolio() {
-            const saved = localStorage.getItem('portfolioItems');
-            portfolioItems = saved ? JSON.parse(saved) : [{title: "Personal Dashboard", desc: "Task manager + portfolio site on GitHub Pages"}];
+        async function loadPortfolio() {
+            try {
+                const snapshot = await db.collection('portfolio').doc(userId).get();
+                portfolioItems = snapshot.exists ? snapshot.data().items || [] : [];
+            } catch(e) {}
+            if (portfolioItems.length === 0) portfolioItems = [{title: "Personal Dashboard", desc: "Task manager + portfolio on GitHub Pages"}];
             renderPortfolio();
         }
-        function savePortfolio() { localStorage.setItem('portfolioItems', JSON.stringify(portfolioItems)); }
+        async function savePortfolio() {
+            try {
+                await db.collection('portfolio').doc(userId).set({items: portfolioItems});
+            } catch(e) {}
+        }
         function renderPortfolio() {
             const grid = document.getElementById('portfolio-grid');
             grid.innerHTML = portfolioItems.map(p => `
@@ -167,7 +191,7 @@
             const title = document.getElementById('proj-title').value.trim();
             const desc = document.getElementById('proj-desc').value.trim();
             if (title) {
-                portfolioItems.unshift({title, desc: desc || 'No description provided'});
+                portfolioItems.unshift({title, desc: desc || 'No description'});
                 savePortfolio();
                 renderPortfolio();
             }
@@ -176,11 +200,11 @@
             document.getElementById('proj-desc').value = '';
         }
 
-        // Initialize everything
-        window.onload = function() {
+        // Init
+        window.onload = async () => {
             renderNav();
-            loadTasks();
-            loadPortfolio();
+            await loadTasks();
+            await loadPortfolio();
             switchTab(isFullMode ? 0 : 1);
         };
     </script>
