@@ -20,11 +20,11 @@
 <body class="bg-slate-50 min-h-screen">
     <div class="flex flex-col md:flex-row h-screen">
         <!-- Sidebar -->
-        <div class="md:w-72 bg-white border-r md:border-r border-slate-200 flex flex-col">
+        <div class="md:w-72 bg-white border-r border-slate-200 flex flex-col">
             <div class="p-6 border-b">
                 <h1 class="text-3xl font-display tracking-tight text-slate-900">Personal Hub</h1>
             </div>
-            <nav id="nav-container" class="flex-1 p-4 flex md:flex-col gap-1"></nav>
+            <nav id="nav-container" class="flex-1 p-4 flex md:flex-col gap-1 overflow-x-auto"></nav>
         </div>
 
         <!-- Main Content -->
@@ -34,14 +34,14 @@
                 <h2 class="text-3xl font-semibold mb-6">Daily Tasks</h2>
                 <div class="bg-white rounded-3xl p-6 shadow-sm border mb-8">
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                        <input id="task-input" type="text" class="sm:col-span-5 px-4 py-3 border rounded-2xl" placeholder="New task...">
-                        <input id="due-date" type="date" class="sm:col-span-3 px-4 py-3 border rounded-2xl">
-                        <select id="priority" class="sm:col-span-2 px-4 py-3 border rounded-2xl">
+                        <input id="task-input" type="text" class="sm:col-span-5 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400" placeholder="What needs to be done?">
+                        <input id="due-date" type="date" class="sm:col-span-3 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400">
+                        <select id="priority" class="sm:col-span-2 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400">
                             <option value="high">High</option>
                             <option value="medium" selected>Medium</option>
                             <option value="low">Low</option>
                         </select>
-                        <button onclick="addTask()" class="sm:col-span-2 bg-indigo-600 text-white rounded-2xl">Add</button>
+                        <button onclick="addTask()" class="sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl">Add Task</button>
                     </div>
                 </div>
                 <div id="tasks-container" class="space-y-3"></div>
@@ -51,7 +51,7 @@
             <div id="content-1" class="tab-content max-w-5xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-semibold">Portfolio</h2>
-                    ${isFullMode ? `<button onclick="showAddProjectForm()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2">+ New Project</button>` : ''}
+                    ${isFullMode ? `<button onclick="showAddProjectForm()" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-indigo-700">+ New Project</button>` : ''}
                 </div>
                 <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
             </div>
@@ -61,18 +61,18 @@
                 <div class="flex justify-between items-center mb-8">
                     <h2 class="text-3xl font-semibold">CV / Profile</h2>
                     <button onclick="window.print()" class="no-print bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-sm">
-                        <i class="fa-solid fa-download"></i> Export as PDF
+                        <i class="fa-solid fa-download"></i> Export PDF
                     </button>
                 </div>
                 <div class="bg-white rounded-3xl p-8 shadow-sm border">
                     <h3 class="font-semibold text-lg mb-4">Professional Summary</h3>
-                    <p class="text-slate-600 leading-relaxed">Passionate about building useful digital tools and solving real problems. Always eager to learn and create value.</p>
+                    <p class="text-slate-600">Passionate about building useful tools and solving problems. Open to new opportunities.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Project Add Modal -->
+    <!-- Add Project Modal -->
     <div id="project-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
         <div class="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
             <h3 class="font-semibold mb-6">Add New Project</h3>
@@ -80,7 +80,7 @@
             <textarea id="proj-desc" class="w-full border rounded-2xl px-4 py-3 h-28" placeholder="Short description..."></textarea>
             <div class="flex gap-4 mt-8">
                 <button onclick="hideProjectModal()" class="flex-1 py-3 border rounded-2xl">Cancel</button>
-                <button onclick="saveNewProject()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl">Save Project</button>
+                <button onclick="saveNewProject()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl">Save</button>
             </div>
         </div>
     </div>
@@ -89,24 +89,30 @@
         const isFullMode = new URLSearchParams(window.location.search).get('full') === 'true';
 
         function renderNav() {
-            const container = document.getElementById('nav-container');
+            const nav = document.getElementById('nav-container');
             let html = '';
             if (isFullMode) html += `<button onclick="switchTab(0)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50" id="nav-0"><i class="fa-solid fa-list-check"></i> Daily Tasks</button>`;
             html += `<button onclick="switchTab(1)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50 ${!isFullMode ? 'active' : ''}" id="nav-1"><i class="fa-solid fa-briefcase"></i> Portfolio</button>`;
             html += `<button onclick="switchTab(2)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50" id="nav-2"><i class="fa-solid fa-user"></i> CV / Profile</button>`;
-            container.innerHTML = html;
+            nav.innerHTML = html;
         }
 
         function switchTab(n) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(`content-${n}`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const active = document.getElementById(`nav-${n}`);
-            if (active) active.classList.add('active');
+            const activeNav = document.getElementById(`nav-${n}`);
+            if (activeNav) activeNav.classList.add('active');
         }
 
         // Tasks
-        let tasks = [{id: Date.now(), text: "Sample task - you can add more", dueDate: "2026-07-25", priority: "medium", completed: false}];
+        let tasks = [];
+        function loadTasks() {
+            const saved = localStorage.getItem('tasks');
+            tasks = saved ? JSON.parse(saved) : [{id: Date.now(), text: "Sample task - add more!", dueDate: "2026-07-25", priority: "medium", completed: false}];
+            renderTasks();
+        }
+        function saveTasks() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
         function renderTasks() {
             const container = document.getElementById('tasks-container');
             container.innerHTML = tasks.map(t => `
@@ -114,25 +120,34 @@
                     <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-5 h-5 accent-indigo-600">
                     <div class="flex-1">
                         <div class="${t.completed ? 'line-through text-slate-500' : ''}">${t.text}</div>
+                        ${t.dueDate ? `<div class="text-xs text-slate-500">Due ${t.dueDate}</div>` : ''}
                     </div>
                 </div>
             `).join('');
         }
         function addTask() {
-            const input = document.getElementById('task-input');
-            if (!input.value.trim()) return;
-            tasks.unshift({id: Date.now(), text: input.value, dueDate: document.getElementById('due-date').value, priority: document.getElementById('priority').value, completed: false});
+            const text = document.getElementById('task-input').value.trim();
+            if (!text) return;
+            tasks.unshift({id: Date.now(), text, dueDate: document.getElementById('due-date').value, priority: document.getElementById('priority').value, completed: false});
+            saveTasks();
             renderTasks();
-            input.value = '';
+            document.getElementById('task-input').value = '';
         }
         function toggleTask(id) {
             const task = tasks.find(t => t.id === id);
             if (task) task.completed = !task.completed;
+            saveTasks();
             renderTasks();
         }
 
         // Portfolio
-        let portfolioItems = [{title: "Personal Dashboard", desc: "Task manager + portfolio site on GitHub Pages"}];
+        let portfolioItems = [];
+        function loadPortfolio() {
+            const saved = localStorage.getItem('portfolioItems');
+            portfolioItems = saved ? JSON.parse(saved) : [{title: "Personal Dashboard", desc: "Task manager + portfolio site on GitHub Pages"}];
+            renderPortfolio();
+        }
+        function savePortfolio() { localStorage.setItem('portfolioItems', JSON.stringify(portfolioItems)); }
         function renderPortfolio() {
             const grid = document.getElementById('portfolio-grid');
             grid.innerHTML = portfolioItems.map(p => `
@@ -152,7 +167,8 @@
             const title = document.getElementById('proj-title').value.trim();
             const desc = document.getElementById('proj-desc').value.trim();
             if (title) {
-                portfolioItems.unshift({title, desc: desc || 'No description'});
+                portfolioItems.unshift({title, desc: desc || 'No description provided'});
+                savePortfolio();
                 renderPortfolio();
             }
             hideProjectModal();
@@ -160,11 +176,11 @@
             document.getElementById('proj-desc').value = '';
         }
 
-        // Init
+        // Initialize everything
         window.onload = function() {
             renderNav();
-            renderTasks();
-            renderPortfolio();
+            loadTasks();
+            loadPortfolio();
             switchTab(isFullMode ? 0 : 1);
         };
     </script>
