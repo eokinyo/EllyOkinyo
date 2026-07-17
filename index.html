@@ -3,213 +3,563 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elly Okinyo - Personal Hub</title>
+    <title>Elly Okinyo — Personal Hub</title>
+
+    <meta property="og:title" content="Elly Okinyo — Personal Hub">
+    <meta property="og:description" content="Portfolio, CV and projects.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Firebase: app + firestore (database) + auth (login) -->
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
     <script src="config.js"></script>
+
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; padding: 2rem; }
-        }
-        body { font-family: 'Inter', system_ui, sans-serif; }
-        .font-display { font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        .nav-item.active { background-color: #6366f1; color: white; border-radius: 0.75rem; }
+        @media print {
+            .no-print { display: none !important; }
+            #sidebar { display: none !important; }
+            .tab-content:not(.active) { display: none !important; }
+            body { background: white; }
+            main { padding: 0 !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-    <div class="flex flex-col md:flex-row h-screen">
-        <!-- Sidebar -->
-        <div class="md:w-72 bg-white border-r border-slate-200 flex flex-col">
-            <div class="p-6 border-b">
-                <h1 class="text-3xl font-display tracking-tight text-slate-900">Personal Hub</h1>
+    <!-- Owner bootstrap banner: shows your UID the first time you sign in -->
+    <div id="owner-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm px-4 py-3">
+        You're signed in, but this account isn't set as the owner yet. Your user ID is:
+        <code id="uid-value" class="font-mono bg-amber-100 px-2 py-0.5 rounded select-all"></code>.
+        Paste it into <code>OWNER_UID</code> in <code>index.html</code> and into your Firestore rules, then redeploy.
+    </div>
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+        <!-- Sidebar / Top nav -->
+        <div id="sidebar" class="md:w-72 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
+            <div class="p-6 border-b border-slate-100">
+                <h1 class="text-2xl font-display tracking-tight text-slate-900">Personal Hub</h1>
+                <p class="text-xs text-slate-500 mt-1">Daily life • Portfolio • CV</p>
             </div>
-            <nav id="nav-container" class="flex-1 p-4 flex md:flex-col gap-1 overflow-x-auto"></nav>
+            <nav id="nav-container" class="flex-1 p-3 flex md:flex-col gap-1 overflow-x-auto"></nav>
+            <div class="p-4 border-t border-slate-100 text-xs space-y-2">
+                <div id="auth-box" class="text-slate-500"></div>
+                <div id="sync-status" class="text-slate-400"></div>
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 overflow-auto p-4 md:p-8">
-            <!-- Daily Tasks -->
-            <div id="content-0" class="tab-content max-w-3xl mx-auto">
-                <h2 class="text-3xl font-semibold mb-6">Daily Tasks</h2>
-                <div class="bg-white rounded-3xl p-6 shadow-sm border mb-8">
+        <!-- Main content -->
+        <main class="flex-1 overflow-auto p-4 md:p-8">
+            <!-- Tab 0: Daily Tasks (owner only) -->
+            <section id="content-0" class="tab-content max-w-3xl mx-auto">
+                <h2 class="text-3xl font-semibold mb-6 text-slate-900">Daily Tasks</h2>
+                <div class="bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-100 mb-8">
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                        <input id="task-input" type="text" class="sm:col-span-5 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400" placeholder="What needs to be done?">
-                        <input id="due-date" type="date" class="sm:col-span-3 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400">
-                        <select id="priority" class="sm:col-span-2 px-4 py-3 border rounded-2xl focus:outline-none focus:border-indigo-400">
+                        <input id="task-input" type="text" class="sm:col-span-5 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm" placeholder="What needs to be done?">
+                        <input id="due-date" type="date" class="sm:col-span-3 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm">
+                        <select id="priority" class="sm:col-span-2 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm bg-white">
                             <option value="high">High</option>
                             <option value="medium" selected>Medium</option>
                             <option value="low">Low</option>
                         </select>
-                        <button onclick="addTask()" class="sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl">Add Task</button>
+                        <button onclick="addTask()" class="sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-medium py-3 text-sm">Add</button>
                     </div>
                 </div>
                 <div id="tasks-container" class="space-y-3"></div>
-            </div>
+            </section>
 
-            <!-- Portfolio -->
-            <div id="content-1" class="tab-content max-w-5xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-semibold">Portfolio</h2>
-                    <button onclick="showAddProjectForm()" 
-                            class="bg-indigo-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-indigo-700 ${isFullMode ? '' : 'hidden'}">
-                        + New Project
+            <!-- Tab 1: Portfolio -->
+            <section id="content-1" class="tab-content active max-w-5xl mx-auto">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <h2 class="text-3xl font-semibold text-slate-900">Portfolio</h2>
+                    <button onclick="showProjectModal()" class="owner-only bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm whitespace-nowrap">
+                        <i class="fa-solid fa-plus"></i> New Project
                     </button>
                 </div>
                 <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-            </div>
+            </section>
 
-            <!-- CV -->
-            <div id="content-2" class="tab-content max-w-3xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-3xl font-semibold">CV / Profile</h2>
-                    <button onclick="window.print()" class="no-print bg-emerald-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-sm">
+            <!-- Tab 2: CV / Profile -->
+            <section id="content-2" class="tab-content max-w-3xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-semibold text-slate-900">CV / Profile</h2>
+                    <button onclick="window.print()" class="no-print bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm">
                         <i class="fa-solid fa-download"></i> Export PDF
                     </button>
                 </div>
-                <div class="bg-white rounded-3xl p-8 shadow-sm border">
-                    <h3 class="font-semibold text-lg mb-4">Professional Summary</h3>
-                    <p class="text-slate-600 leading-relaxed">Passionate about building useful tools and solving problems. Open to opportunities.</p>
+
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
+                    <h3 class="font-semibold text-lg mb-4 text-slate-800">Professional Summary</h3>
+                    <p id="cv-summary-view" class="text-slate-600 leading-relaxed"></p>
+                    <div class="owner-only mt-4">
+                        <textarea id="cv-summary-input" class="hidden w-full h-28 p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm"></textarea>
+                        <button onclick="toggleSummaryEdit()" id="cv-summary-btn" class="text-sm bg-slate-800 text-white px-5 py-2 rounded-2xl">Edit</button>
+                    </div>
                 </div>
-            </div>
-        </div>
+
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-lg text-slate-800">Experience</h3>
+                        <button onclick="addExperience()" class="owner-only no-print text-sm text-indigo-600 font-medium">+ Add</button>
+                    </div>
+                    <div id="cv-experience" class="space-y-5"></div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold text-lg text-slate-800">Education</h3>
+                        <button onclick="addEducation()" class="owner-only no-print text-sm text-indigo-600 font-medium">+ Add</button>
+                    </div>
+                    <div id="cv-education" class="space-y-4"></div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                    <h3 class="font-semibold text-lg mb-4 text-slate-800">Skills</h3>
+                    <div id="cv-skills" class="flex flex-wrap gap-2"></div>
+                    <div class="owner-only no-print mt-4 flex gap-2">
+                        <input id="skill-input" type="text" class="flex-1 px-4 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm" placeholder="Add a skill and press Enter" onkeydown="if(event.key==='Enter')addSkill()">
+                        <button onclick="addSkill()" class="bg-slate-800 text-white px-4 py-2 rounded-2xl text-sm">Add</button>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Project Modal -->
-    <div id="project-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-md mx-4">
-            <h3 class="font-semibold mb-6">Add New Project</h3>
-            <input id="proj-title" class="w-full border rounded-2xl px-4 py-3 mb-4" placeholder="Project Title">
-            <textarea id="proj-desc" class="w-full border rounded-2xl px-4 py-3 h-28" placeholder="Short description..."></textarea>
-            <div class="flex gap-4 mt-8">
-                <button onclick="hideProjectModal()" class="flex-1 py-3 border rounded-2xl">Cancel</button>
-                <button onclick="saveNewProject()" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl">Save Project</button>
+    <!-- Add project modal -->
+    <div id="project-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md">
+            <h3 class="font-semibold text-lg mb-6">Add Project</h3>
+            <input id="proj-title" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Project title">
+            <textarea id="proj-desc" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 h-24 text-sm focus:outline-none focus:border-indigo-400" placeholder="Short description"></textarea>
+            <input id="proj-link" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Link (optional) — https://...">
+            <input id="proj-status" class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Status (optional) — e.g. Live, In progress">
+            <div class="flex gap-3 mt-8">
+                <button onclick="hideProjectModal()" class="flex-1 py-3 border border-slate-200 rounded-2xl text-sm">Cancel</button>
+                <button onclick="saveProject()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm">Save</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Use the config from config.js (do not re-declare)
-        firebase.initializeApp(window.firebaseConfig);
-        const db = firebase.firestore();
+    /* ============================================================
+       OWNER IDENTITY
+       After your first sign-in, the amber banner shows your user ID.
+       Paste it here (and into your Firestore rules), then redeploy.
+       ============================================================ */
+    const OWNER_UID = "PASTE_YOUR_FIREBASE_UID_HERE";
 
-        const isFullMode = new URLSearchParams(window.location.search).get('full') === 'true';
-        const userId = "elly-okinyo";
-
-        function renderNav() {
-            const nav = document.getElementById('nav-container');
-            let html = '';
-            if (isFullMode) html += `<button onclick="switchTab(0)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50" id="nav-0"><i class="fa-solid fa-list-check"></i> Daily Tasks</button>`;
-            html += `<button onclick="switchTab(1)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50 ${!isFullMode ? 'active' : ''}" id="nav-1"><i class="fa-solid fa-briefcase"></i> Portfolio</button>`;
-            html += `<button onclick="switchTab(2)" class="nav-item px-5 py-3 text-left flex items-center gap-3 hover:bg-slate-50" id="nav-2"><i class="fa-solid fa-user"></i> CV / Profile</button>`;
-            nav.innerHTML = html;
+    /* ============================================================
+       FIREBASE INIT (app still shows public content if this fails)
+       ============================================================ */
+    let db = null, auth = null, provider = null, firebaseReady = false;
+    try {
+        if (window.firebaseConfig && window.firebase) {
+            firebase.initializeApp(window.firebaseConfig);
+            db = firebase.firestore();
+            auth = firebase.auth();
+            provider = new firebase.auth.GoogleAuthProvider();
+            firebaseReady = true;
         }
+    } catch (e) {
+        console.warn("Firebase not initialized:", e.message);
+    }
 
-        function switchTab(n) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(`content-${n}`).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            const active = document.getElementById(`nav-${n}`);
-            if (active) active.classList.add('active');
-        }
+    let currentUser = null;
+    let isOwner = false;      // true only when the signed-in Google account is the owner
+    let firstAuth = true;
 
-        // Tasks, Portfolio, etc. (your functions remain the same)
-        let tasks = [];
-        async function loadTasks() {
+    function withTimeout(promise, ms) {
+        return Promise.race([
+            promise,
+            new Promise(function (_, reject) { setTimeout(function () { reject(new Error("timeout")); }, ms); })
+        ]);
+    }
+
+    /* ============================================================
+       STORAGE
+       scope 'public'  -> anyone can read, only owner can write
+       scope 'private' -> only owner can read or write (enforced by rules)
+       localStorage is used as an instant cache / offline fallback.
+       ============================================================ */
+    async function loadDoc(scope, name, fallback) {
+        const cacheKey = scope + ":" + name;
+        if (firebaseReady) {
             try {
-                const snapshot = await db.collection('tasks').doc(userId).get();
-                tasks = snapshot.exists ? snapshot.data().items || [] : [];
-            } catch(e) {
-                console.error("Firebase error, using local fallback", e);
+                const snap = await withTimeout(db.collection(scope).doc(name).get(), 6000);
+                if (snap.exists && snap.data().value !== undefined) {
+                    const v = snap.data().value;
+                    localStorage.setItem(cacheKey, JSON.stringify(v));
+                    return v;
+                }
+            } catch (e) {
+                console.warn("Cloud load failed (" + cacheKey + "):", e.message);
             }
-            if (tasks.length === 0) tasks = [{id: Date.now(), text: "Welcome! Add your first task", dueDate: "2026-07-25", priority: "medium", completed: false}];
-            renderTasks();
         }
-        async function saveTasks() {
-            try {
-                await db.collection('tasks').doc(userId).set({items: tasks});
-            } catch(e) { console.error(e); }
-        }
-        function renderTasks() {
-            const container = document.getElementById('tasks-container');
-            container.innerHTML = tasks.map(t => `
-                <div class="bg-white border rounded-3xl p-5 flex items-center gap-4">
-                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})" class="w-5 h-5 accent-indigo-600">
-                    <div class="flex-1">
-                        <div class="${t.completed ? 'line-through text-slate-500' : ''}">${t.text}</div>
-                        ${t.dueDate ? `<div class="text-xs text-slate-500">Due ${t.dueDate}</div>` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-        function addTask() {
-            const text = document.getElementById('task-input').value.trim();
-            if (!text) return;
-            tasks.unshift({id: Date.now(), text, dueDate: document.getElementById('due-date').value, priority: document.getElementById('priority').value, completed: false});
-            saveTasks();
-            renderTasks();
-            document.getElementById('task-input').value = '';
-        }
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) task.completed = !task.completed;
-            saveTasks();
-            renderTasks();
-        }
+        const local = localStorage.getItem(cacheKey);
+        if (local !== null) { try { return JSON.parse(local); } catch (e) {} }
+        return fallback;
+    }
 
-        // Portfolio (same as before)
-        let portfolioItems = [];
-        async function loadPortfolio() {
+    async function saveDoc(scope, name, value) {
+        try { localStorage.setItem(scope + ":" + name, JSON.stringify(value)); } catch (e) {}
+        if (firebaseReady) {
             try {
-                const snapshot = await db.collection('portfolio').doc(userId).get();
-                portfolioItems = snapshot.exists ? snapshot.data().items || [] : [];
-            } catch(e) {}
-            if (portfolioItems.length === 0) portfolioItems = [{title: "Personal Dashboard", desc: "Task manager + portfolio on GitHub Pages"}];
-            renderPortfolio();
-        }
-        async function savePortfolio() {
-            try {
-                await db.collection('portfolio').doc(userId).set({items: portfolioItems});
-            } catch(e) {}
-        }
-        function renderPortfolio() {
-            const grid = document.getElementById('portfolio-grid');
-            grid.innerHTML = portfolioItems.map(p => `
-                <div class="bg-white border rounded-3xl p-6">
-                    <h4 class="font-semibold">${p.title}</h4>
-                    <p class="text-slate-600 mt-2">${p.desc}</p>
-                </div>
-            `).join('');
-        }
-        function showAddProjectForm() {
-            document.getElementById('project-modal').classList.remove('hidden');
-        }
-        function hideProjectModal() {
-            document.getElementById('project-modal').classList.add('hidden');
-        }
-        function saveNewProject() {
-            const title = document.getElementById('proj-title').value.trim();
-            const desc = document.getElementById('proj-desc').value.trim();
-            if (title) {
-                portfolioItems.unshift({title, desc: desc || 'No description'});
-                savePortfolio();
-                renderPortfolio();
+                await withTimeout(db.collection(scope).doc(name).set({ value: value }), 6000);
+                setStatus("cloud-ok");
+            } catch (e) {
+                console.warn("Cloud save failed (" + scope + ":" + name + "):", e.message);
+                setStatus("cloud-fail");
             }
-            hideProjectModal();
-            document.getElementById('proj-title').value = '';
-            document.getElementById('proj-desc').value = '';
         }
+    }
 
-        // Init
-        window.onload = async () => {
-            renderNav();
-            await loadTasks();
-            await loadPortfolio();
-            switchTab(isFullMode ? 0 : 1);
-        };
+    function setStatus(state) {
+        const el = document.getElementById("sync-status");
+        if (!el) return;
+        if (!firebaseReady)              el.innerHTML = "💾 Saved on this device";
+        else if (state === "cloud-ok")   el.innerHTML = "☁️ Cloud sync on";
+        else if (state === "cloud-fail") el.innerHTML = "⚠️ Cloud save failed — saved locally";
+        else                             el.innerHTML = "☁️ Connecting…";
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+        });
+    }
+
+    /* ============================================================
+       AUTH
+       ============================================================ */
+    function signIn() {
+        if (!auth) { alert("Sign-in unavailable: Firebase isn't configured yet."); return; }
+        auth.signInWithPopup(provider).catch(function (e) {
+            alert("Sign-in failed: " + e.message);
+        });
+    }
+    function signOut() { if (auth) auth.signOut(); }
+
+    function renderAuthUI() {
+        const box = document.getElementById("auth-box");
+        if (!firebaseReady) {
+            box.innerHTML = "Local mode (sign-in unavailable)";
+        } else if (currentUser) {
+            box.innerHTML =
+                '<div class="truncate text-slate-600">' + escapeHtml(currentUser.email || "Signed in") + '</div>' +
+                '<button onclick="signOut()" class="mt-1 text-indigo-600 hover:underline">Sign out</button>';
+        } else {
+            box.innerHTML =
+                '<button onclick="signIn()" class="text-indigo-600 hover:underline"><i class="fa-brands fa-google mr-1"></i>Sign in</button>';
+        }
+        const banner = document.getElementById("owner-banner");
+        if (currentUser && !isOwner) {
+            document.getElementById("uid-value").textContent = currentUser.uid;
+            banner.classList.remove("hidden");
+        } else {
+            banner.classList.add("hidden");
+        }
+    }
+
+    function handleAuth(user) {
+        currentUser = user;
+        isOwner = !!(user && user.uid === OWNER_UID);
+        renderAuthUI();
+        renderNav();
+        applyMode();
+        renderPortfolio();   // re-render so owner controls appear/disappear
+        renderCv();
+        refreshPrivate();
+    }
+
+    async function refreshPrivate() {
+        if (isOwner) {
+            tasks = await loadDoc("private", "tasks", [
+                { id: Date.now(), text: "Welcome back — add a task", dueDate: "", priority: "medium", completed: false }
+            ]);
+        } else {
+            tasks = [];
+        }
+        renderTasks();
+        if (firstAuth) {
+            firstAuth = false;
+            switchTab(isOwner ? 0 : 1);
+        } else {
+            const active = document.querySelector(".tab-content.active");
+            if (active && active.id === "content-0" && !isOwner) switchTab(1);
+        }
+    }
+
+    /* ============================================================
+       NAVIGATION
+       ============================================================ */
+    function renderNav() {
+        const nav = document.getElementById("nav-container");
+        let html = "";
+        if (isOwner) html += navBtn(0, "fa-list-check", "Daily Tasks");
+        html += navBtn(1, "fa-briefcase", "Portfolio");
+        html += navBtn(2, "fa-user", "CV / Profile");
+        nav.innerHTML = html;
+        const active = document.querySelector(".tab-content.active");
+        if (active) {
+            const n = active.id.split("-")[1];
+            const navEl = document.getElementById("nav-" + n);
+            if (navEl) navEl.classList.add("active");
+        }
+    }
+    function navBtn(n, icon, label) {
+        return '<button onclick="switchTab(' + n + ')" id="nav-' + n + '" ' +
+            'class="nav-item px-4 py-3 text-left flex items-center gap-3 text-slate-700 hover:bg-slate-50 rounded-xl text-sm whitespace-nowrap">' +
+            '<i class="fa-solid ' + icon + '"></i><span>' + label + '</span></button>';
+    }
+    function switchTab(n) {
+        document.querySelectorAll(".tab-content").forEach(function (el) { el.classList.remove("active"); });
+        const content = document.getElementById("content-" + n);
+        if (content) content.classList.add("active");
+        document.querySelectorAll(".nav-item").forEach(function (el) { el.classList.remove("active"); });
+        const navEl = document.getElementById("nav-" + n);
+        if (navEl) navEl.classList.add("active");
+    }
+
+    function applyMode() {
+        document.querySelectorAll(".owner-only").forEach(function (el) {
+            el.style.display = isOwner ? "" : "none";
+        });
+    }
+
+    /* ============================================================
+       DAILY TASKS (private)
+       ============================================================ */
+    let tasks = [];
+    function renderTasks() {
+        const c = document.getElementById("tasks-container");
+        if (!tasks.length) {
+            c.innerHTML = '<p class="text-slate-400 text-center py-10">No tasks yet. Add one above.</p>';
+            return;
+        }
+        const sorted = tasks.slice().sort(function (a, b) {
+            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+            if (!a.dueDate) return 1;
+            if (!b.dueDate) return -1;
+            return new Date(a.dueDate) - new Date(b.dueDate);
+        });
+        c.innerHTML = sorted.map(function (t) {
+            const badge = t.priority === "high" ? "bg-red-100 text-red-700"
+                        : t.priority === "low"  ? "bg-slate-100 text-slate-600"
+                        : "bg-amber-100 text-amber-700";
+            return '<div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-4 ' + (t.completed ? "opacity-60" : "") + '">' +
+                '<input type="checkbox" ' + (t.completed ? "checked" : "") + ' onchange="toggleTask(' + t.id + ')" class="w-5 h-5 accent-indigo-600 shrink-0">' +
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="font-medium ' + (t.completed ? "line-through text-slate-400" : "text-slate-800") + '">' + escapeHtml(t.text) + '</div>' +
+                    (t.dueDate ? '<div class="text-xs text-slate-500 mt-0.5">Due ' + escapeHtml(t.dueDate) + '</div>' : "") +
+                '</div>' +
+                '<span class="text-xs font-medium px-2.5 py-1 rounded-full ' + badge + ' shrink-0">' + escapeHtml(t.priority) + '</span>' +
+                '<button onclick="deleteTask(' + t.id + ')" class="text-slate-300 hover:text-red-500 shrink-0"><i class="fa-solid fa-trash-can"></i></button>' +
+            '</div>';
+        }).join("");
+    }
+    function addTask() {
+        if (!isOwner) return;
+        const input = document.getElementById("task-input");
+        const text = input.value.trim();
+        if (!text) { input.focus(); return; }
+        tasks.unshift({
+            id: Date.now(),
+            text: text,
+            dueDate: document.getElementById("due-date").value,
+            priority: document.getElementById("priority").value,
+            completed: false
+        });
+        saveDoc("private", "tasks", tasks);
+        renderTasks();
+        input.value = "";
+        document.getElementById("due-date").value = "";
+        input.focus();
+    }
+    function toggleTask(id) {
+        const t = tasks.find(function (x) { return x.id === id; });
+        if (t) { t.completed = !t.completed; saveDoc("private", "tasks", tasks); renderTasks(); }
+    }
+    function deleteTask(id) {
+        if (!confirm("Delete this task?")) return;
+        tasks = tasks.filter(function (x) { return x.id !== id; });
+        saveDoc("private", "tasks", tasks);
+        renderTasks();
+    }
+
+    /* ============================================================
+       PORTFOLIO (public)
+       ============================================================ */
+    let portfolio = [];
+    function renderPortfolio() {
+        const grid = document.getElementById("portfolio-grid");
+        if (!portfolio.length) { grid.innerHTML = '<p class="text-slate-400">No projects yet.</p>'; return; }
+        grid.innerHTML = portfolio.map(function (p, i) {
+            const link = p.link ? '<a href="' + escapeHtml(p.link) + '" target="_blank" rel="noopener" class="text-indigo-600 text-sm font-medium">View →</a>' : '<span></span>';
+            const status = p.status ? '<span class="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">' + escapeHtml(p.status) + '</span>' : "";
+            const del = isOwner ? '<button onclick="deleteProject(' + i + ')" class="no-print text-slate-300 hover:text-red-500 ml-2"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
+            return '<div class="bg-white border border-slate-100 rounded-3xl p-6 hover:shadow-md transition">' +
+                '<div class="flex items-start justify-between gap-2">' +
+                    '<h4 class="font-semibold text-slate-800">' + escapeHtml(p.title) + '</h4>' + del +
+                '</div>' +
+                '<p class="text-slate-600 text-sm mt-2">' + escapeHtml(p.desc) + '</p>' +
+                '<div class="mt-4 flex items-center justify-between">' + link + status + '</div>' +
+            '</div>';
+        }).join("");
+    }
+    function showProjectModal() { if (isOwner) document.getElementById("project-modal").classList.remove("hidden"); }
+    function hideProjectModal() { document.getElementById("project-modal").classList.add("hidden"); }
+    function saveProject() {
+        const title = document.getElementById("proj-title").value.trim();
+        if (!title) return;
+        portfolio.unshift({
+            title: title,
+            desc: document.getElementById("proj-desc").value.trim() || "No description",
+            link: document.getElementById("proj-link").value.trim(),
+            status: document.getElementById("proj-status").value.trim()
+        });
+        saveDoc("public", "portfolio", portfolio);
+        renderPortfolio();
+        hideProjectModal();
+        ["proj-title", "proj-desc", "proj-link", "proj-status"].forEach(function (id) { document.getElementById(id).value = ""; });
+    }
+    function deleteProject(i) {
+        if (!confirm("Delete this project?")) return;
+        portfolio.splice(i, 1);
+        saveDoc("public", "portfolio", portfolio);
+        renderPortfolio();
+    }
+
+    /* ============================================================
+       CV / PROFILE (public)
+       ============================================================ */
+    let cv = { summary: "", experience: [], education: [], skills: [] };
+    function renderCv() {
+        document.getElementById("cv-summary-view").textContent = cv.summary || "No summary yet.";
+
+        const exp = document.getElementById("cv-experience");
+        exp.innerHTML = cv.experience.length ? cv.experience.map(function (e, i) {
+            const del = isOwner ? '<button onclick="deleteExperience(' + i + ')" class="no-print text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
+            return '<div class="border-l-2 border-indigo-100 pl-4">' +
+                '<div class="flex items-start justify-between gap-2">' +
+                    '<div class="font-medium text-slate-800">' + escapeHtml(e.role) + ' • ' + escapeHtml(e.company) + '</div>' + del +
+                '</div>' +
+                '<div class="text-xs text-slate-500 mb-1">' + escapeHtml(e.period) + '</div>' +
+                (e.description ? '<p class="text-sm text-slate-600">' + escapeHtml(e.description) + '</p>' : "") +
+            '</div>';
+        }).join("") : '<p class="text-slate-400 text-sm">Nothing added yet.</p>';
+
+        const edu = document.getElementById("cv-education");
+        edu.innerHTML = cv.education.length ? cv.education.map(function (e, i) {
+            const del = isOwner ? '<button onclick="deleteEducation(' + i + ')" class="no-print text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
+            return '<div class="flex items-start justify-between gap-2">' +
+                '<div><div class="font-medium text-slate-800">' + escapeHtml(e.degree) + '</div>' +
+                '<div class="text-xs text-slate-500">' + escapeHtml(e.school) + ' • ' + escapeHtml(e.period) + '</div></div>' + del +
+            '</div>';
+        }).join("") : '<p class="text-slate-400 text-sm">Nothing added yet.</p>';
+
+        const sk = document.getElementById("cv-skills");
+        sk.innerHTML = cv.skills.length ? cv.skills.map(function (s, i) {
+            const del = isOwner ? '<button onclick="deleteSkill(' + i + ')" class="no-print ml-2 text-slate-400 hover:text-red-500">&times;</button>' : "";
+            return '<span class="inline-flex items-center text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full">' + escapeHtml(s) + del + '</span>';
+        }).join("") : '<p class="text-slate-400 text-sm">No skills added yet.</p>';
+    }
+    function toggleSummaryEdit() {
+        if (!isOwner) return;
+        const view = document.getElementById("cv-summary-view");
+        const input = document.getElementById("cv-summary-input");
+        const btn = document.getElementById("cv-summary-btn");
+        if (input.classList.contains("hidden")) {
+            input.value = cv.summary;
+            input.classList.remove("hidden");
+            view.classList.add("hidden");
+            btn.textContent = "Save";
+        } else {
+            cv.summary = input.value.trim();
+            input.classList.add("hidden");
+            view.classList.remove("hidden");
+            btn.textContent = "Edit";
+            saveDoc("public", "cv", cv);
+            renderCv();
+        }
+    }
+    function addExperience() {
+        if (!isOwner) return;
+        const role = prompt("Role / job title:");
+        if (role === null) return;
+        cv.experience.push({
+            role: role,
+            company: prompt("Company / organisation:") || "",
+            period: prompt("Period (e.g. 2024 – Present):") || "",
+            description: prompt("Short description (optional):") || ""
+        });
+        saveDoc("public", "cv", cv);
+        renderCv();
+    }
+    function deleteExperience(i) { if (isOwner && confirm("Delete this entry?")) { cv.experience.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
+    function addEducation() {
+        if (!isOwner) return;
+        const degree = prompt("Degree / qualification:");
+        if (degree === null) return;
+        cv.education.push({
+            degree: degree,
+            school: prompt("School / institution:") || "",
+            period: prompt("Period (e.g. 2019 – 2023):") || ""
+        });
+        saveDoc("public", "cv", cv);
+        renderCv();
+    }
+    function deleteEducation(i) { if (isOwner && confirm("Delete this entry?")) { cv.education.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
+    function addSkill() {
+        if (!isOwner) return;
+        const input = document.getElementById("skill-input");
+        const s = input.value.trim();
+        if (!s) return;
+        cv.skills.push(s);
+        saveDoc("public", "cv", cv);
+        renderCv();
+        input.value = "";
+        input.focus();
+    }
+    function deleteSkill(i) { if (isOwner) { cv.skills.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
+
+    /* ============================================================
+       INIT
+       ============================================================ */
+    async function loadPublic() {
+        portfolio = await loadDoc("public", "portfolio", [
+            { title: "Personal Hub", desc: "This site — tasks, portfolio and CV in one place.", link: "", status: "Live" }
+        ]);
+        renderPortfolio();
+        cv = await loadDoc("public", "cv", {
+            summary: "Passionate about building useful tools and solving real problems. Open to opportunities.",
+            experience: [], education: [], skills: []
+        });
+        renderCv();
+        setStatus(firebaseReady ? "cloud-ok" : "local");
+    }
+
+    window.onload = function () {
+        setStatus("connecting");
+        renderNav();
+        applyMode();
+        loadPublic();
+        if (firebaseReady) {
+            auth.onAuthStateChanged(handleAuth);
+        } else {
+            handleAuth(null);
+        }
+        document.getElementById("task-input").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") addTask();
+        });
+    };
     </script>
 </body>
 </html>

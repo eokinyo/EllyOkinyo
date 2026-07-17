@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // PUBLIC content (portfolio, CV, later the blog):
+    // anyone can read, but only you can change it.
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == "PASTE_YOUR_FIREBASE_UID_HERE";
+    }
+
+    // PRIVATE content (tasks, and later your calendar):
+    // only you can read OR write. Nobody else can even see it.
+    match /private/{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == "PASTE_YOUR_FIREBASE_UID_HERE";
+    }
+  }
+}
