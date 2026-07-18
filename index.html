@@ -1,564 +1,713 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elly Okinyo — Personal Hub</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elly Okinyo</title>
 
-    <meta property="og:title" content="Elly Okinyo — Personal Hub">
-    <meta property="og:description" content="Portfolio, CV and projects.">
-    <meta property="og:type" content="website">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>">
+<meta property="og:title" content="Elly Okinyo — Personal Hub">
+<meta property="og:description" content="Portfolio, CV, blog and projects.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Firebase: app + firestore (database) + auth (login) -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
-    <script src="config.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<!-- Markdown renderer for the blog -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="config.js"></script>
 
-    <style>
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; font-weight: 600; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .nav-item.active { background-color: #6366f1; color: white; border-radius: 0.75rem; }
-        @media print {
-            .no-print { display: none !important; }
-            #sidebar { display: none !important; }
-            .tab-content:not(.active) { display: none !important; }
-            body { background: white; }
-            main { padding: 0 !important; }
-        }
-    </style>
+<style>
+    :root{
+        --bg:#1d2021; --bg-soft:#282828; --text:#a89984; --muted:#7c6f64;
+        --cream:#fbf1c7; --olive:#b8bb26; --orange:#fe8019; --yellow:#fabd2f;
+        --red:#cc241d; --red-bright:#fb4934; --line:rgba(204,36,29,.55);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:'Inconsolata',ui-monospace,monospace;font-size:15px;line-height:1.6}
+    a{color:var(--olive);text-decoration:none} a:hover{color:var(--yellow)}
+    .cream{color:var(--cream)} .g{color:var(--olive)} .o{color:var(--orange)}
+
+    .app{display:flex;flex-direction:column;min-height:100vh}
+    @media(min-width:768px){.app{flex-direction:row}}
+
+    #sidebar{background:var(--bg);border-bottom:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0}
+    @media(min-width:768px){#sidebar{width:264px;border-bottom:none;border-right:1px solid var(--line)}}
+    .brand{padding:24px 22px 18px;text-align:center}
+    .brand h1{margin:0;font-size:26px;font-weight:800;color:var(--cream);letter-spacing:.01em}
+    .brand .role{font-size:13px;color:var(--orange)} .brand .role span{color:var(--text)}
+    .avatar-wrap{width:112px;height:112px;border-radius:50%;margin:16px auto 0;position:relative;overflow:hidden;
+        background:#3c3836;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+    .avatar-wrap i{color:var(--muted);font-size:42px}
+    .avatar-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    nav{padding:8px 12px;display:flex;gap:6px;overflow-x:auto}
+    @media(min-width:768px){nav{flex-direction:column;flex:1}}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;border:1px solid transparent;
+        background:none;color:var(--text);font-family:inherit;font-size:15px;cursor:pointer;white-space:nowrap;text-align:left}
+    .nav-item:hover{color:var(--cream)} .nav-item.active{border-color:var(--line);color:var(--cream)}
+    .side-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:12px}
+    .side-foot a,.side-foot button{color:var(--olive);background:none;border:none;font-family:inherit;font-size:12px;cursor:pointer;padding:0}
+    .side-foot button:hover{color:var(--yellow)} #sync-status{color:var(--muted);margin-top:8px}
+
+    main{flex:1;overflow:auto;padding:24px 18px;display:flex;flex-direction:column}
+    @media(min-width:768px){main{padding:34px}}
+    .tab-content{display:none} .tab-content.active{display:block}
+    .wrap{max-width:760px;margin:0 auto;width:100%} .wrap-wide{max-width:1000px;margin:0 auto;width:100%}
+
+    h2.title{font-size:30px;font-weight:800;color:var(--cream);margin:0 0 22px;letter-spacing:.01em}
+    h3.sub{font-size:19px;font-weight:700;color:var(--cream);margin:0 0 14px}
+
+    .card{border:1px solid var(--line);border-radius:18px;padding:20px;background:transparent}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:700px){.grid2{grid-template-columns:1fr}}
+    .head-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+
+    .btn{border:1px solid var(--line);background:transparent;color:var(--cream);border-radius:12px;padding:9px 16px;
+        font-family:inherit;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;line-height:1.2}
+    .btn:hover{border-color:var(--orange);color:#fff}
+    .btn-accent{border-color:rgba(184,187,38,.6);color:var(--olive)}
+    .btn-accent:hover{border-color:var(--olive);color:var(--bg);background:var(--olive)}
+
+    .inp,select.inp,textarea.inp{width:100%;background:rgba(235,219,178,.04);border:1px solid var(--line);color:var(--cream);
+        border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px}
+    .inp:focus{outline:none;border-color:var(--yellow)} select.inp{appearance:none}
+    textarea.inp{resize:vertical;min-height:96px}
+    input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive);cursor:pointer;flex:0 0 auto}
+    ::placeholder{color:var(--muted)}
+
+    .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:640px){.form-grid{grid-template-columns:5fr 3fr 2fr 2fr}}
+    .task-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin-bottom:10px}
+    .task-row.done{opacity:.5} .task-main{flex:1;min-width:0} .task-text{color:var(--cream)}
+    .task-text.strike{text-decoration:line-through;color:var(--text)} .task-due{font-size:12px;color:var(--muted);margin-top:2px}
+    .badge{font-size:12px;padding:3px 11px;border-radius:999px;border:1px solid;flex:0 0 auto}
+    .badge-high{color:var(--red-bright);border-color:rgba(251,73,52,.5);background:rgba(251,73,52,.12)}
+    .badge-medium{color:var(--yellow);border-color:rgba(250,189,47,.5);background:rgba(250,189,47,.12)}
+    .badge-low{color:var(--text);border-color:var(--line)}
+    .badge-status{color:var(--olive);border:1px solid rgba(184,187,38,.4);background:rgba(184,187,38,.12);font-size:12px;padding:3px 11px;border-radius:999px}
+    .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex:0 0 auto}
+    .icon-btn:hover{color:var(--red-bright)} .empty{color:var(--muted);text-align:center;padding:34px 0}
+    .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+    @media(max-width:820px){.cal-grid{grid-template-columns:1fr}}
+    .cal-day{border:1px solid var(--line);border-radius:12px;padding:10px;min-height:104px}
+    .cal-day.cal-today{border-color:var(--olive);background:rgba(184,187,38,.06)}
+    .cal-day-head{font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
+    .cal-day-head span{color:var(--cream);font-weight:700;font-size:14px}
+    .cal-task{font-size:12px;padding:5px 8px;border-radius:8px;margin-bottom:6px;cursor:pointer;border-left:3px solid var(--muted);background:rgba(235,219,178,.04);color:var(--cream);line-height:1.35}
+    .cal-task.p-high{border-left-color:var(--red-bright)} .cal-task.p-medium{border-left-color:var(--yellow)} .cal-task.p-low{border-left-color:var(--muted)}
+    .cal-task.done{opacity:.5;text-decoration:line-through}
+    .cal-empty{color:var(--muted);font-size:12px}
+
+    .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .card-ctrls{display:flex;gap:8px;flex-shrink:0}
+    .card-title{color:var(--cream);font-weight:700;font-size:17px}
+    .card-desc{margin:8px 0 0;font-size:14px} .card-foot{margin-top:16px;display:flex;align-items:center;justify-content:space-between}
+
+    .exp{border-left:2px solid rgba(184,187,38,.5);padding-left:16px}
+    .exp-role{color:var(--cream);font-weight:700} .exp-period{font-size:12px;color:var(--muted)} .exp-desc{font-size:14px;margin:4px 0 0}
+    .tag{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;color:var(--text)}
+    .tag button{background:none;border:none;color:var(--muted);cursor:pointer;margin-left:6px;font-family:inherit} .tag button:hover{color:var(--red-bright)}
+    .stack>*+*{margin-top:20px} .mb{margin-bottom:22px}
+
+    /* blog */
+    .blog-card{cursor:pointer} .blog-card:hover{border-color:var(--orange)}
+    .back-link{cursor:pointer;color:var(--olive);display:inline-block;margin-bottom:18px}
+    .md-hint{font-size:12px;color:var(--muted);margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px}
+    .md-hint code{background:rgba(235,219,178,.06);padding:1px 5px;border-radius:4px;color:var(--yellow)}
+    .prose{font-size:15px;line-height:1.75}
+    .prose h1,.prose h2,.prose h3{color:var(--cream);margin:1.2em 0 .5em;font-weight:700}
+    .prose h1{font-size:26px} .prose h2{font-size:22px} .prose h3{font-size:18px}
+    .prose p{margin:.8em 0} .prose a{color:var(--olive)} .prose a:hover{color:var(--yellow)}
+    .prose ul,.prose ol{margin:.6em 0 .6em 1.4em} .prose li{margin:.2em 0}
+    .prose code{background:rgba(235,219,178,.06);padding:2px 6px;border-radius:5px;color:var(--yellow);font-family:inherit}
+    .prose pre{background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto}
+    .prose pre code{background:none;padding:0;color:var(--text)}
+    .prose blockquote{border-left:3px solid var(--red);margin:.8em 0;padding-left:14px;color:var(--muted)}
+    .prose img{max-width:100%;border-radius:10px} .prose hr{border:none;border-top:1px solid var(--line);margin:1.4em 0}
+
+    /* footer */
+    .site-footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0;text-align:center;color:var(--muted);font-size:13px}
+    .socials{display:flex;gap:14px;justify-content:center;margin-top:12px}
+    .socials a{width:42px;height:42px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--cream);font-size:16px}
+    .socials a:hover{border-color:var(--orange);color:var(--orange)}
+
+    #owner-banner{background:rgba(250,189,47,.1);border-bottom:1px solid rgba(250,189,47,.4);color:var(--cream);font-size:13px;padding:12px 18px}
+    #owner-banner code{font-family:inherit;background:rgba(250,189,47,.18);padding:1px 6px;border-radius:4px;color:var(--yellow);user-select:all}
+
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .overlay.hidden{display:none}
+    .modal{background:var(--bg-soft);border:1px solid var(--line);border-radius:18px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+    .modal h3{margin:0 0 18px;color:var(--cream)} .modal .inp{margin-bottom:12px}
+    .row-actions{display:flex;gap:12px;margin-top:8px} .row-actions .btn{flex:1;justify-content:center}
+    .hidden{display:none}
+
+    :focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+    @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+    @media print{
+        #sidebar,.no-print,#owner-banner,.overlay,.site-footer{display:none!important}
+        .tab-content:not(.active){display:none!important}
+        body{background:#fff;color:#1d2021} main{padding:0}
+        h2.title,h3.sub,.card-title,.exp-role,.task-text,.cream,.g,.prose h1,.prose h2,.prose h3{color:#1d2021!important}
+        .card,.exp{border-color:#ccc!important}
+        .badge{border-color:#ccc!important;color:#333!important;background:none!important}
+    }
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen">
-    <!-- Owner bootstrap banner: shows your UID the first time you sign in -->
-    <div id="owner-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-900 text-sm px-4 py-3">
-        You're signed in, but this account isn't set as the owner yet. Your user ID is:
-        <code id="uid-value" class="font-mono bg-amber-100 px-2 py-0.5 rounded select-all"></code>.
-        Paste it into <code>OWNER_UID</code> in <code>index.html</code> and into your Firestore rules, then redeploy.
+<body>
+    <div id="owner-banner" class="hidden">
+        Signed in, but this account isn't the owner yet. Your user ID:
+        <code id="uid-value"></code> — paste it into <code>OWNER_UID</code> and your Firestore rules, then redeploy.
     </div>
 
-    <div class="flex flex-col md:flex-row min-h-screen">
-        <!-- Sidebar / Top nav -->
-        <div id="sidebar" class="md:w-72 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col shrink-0">
-            <div class="p-6 border-b border-slate-100">
-                <h1 class="text-2xl font-display tracking-tight text-slate-900">Personal Hub</h1>
-                <p class="text-xs text-slate-500 mt-1">Daily life • Portfolio • CV</p>
+    <div class="app">
+        <div id="sidebar">
+            <div class="brand">
+                <h1>Elly Okinyo</h1>
+                <div class="role">Software Developer <span>/ Front End</span></div>
+                <div class="avatar-wrap">
+                    <i class="fa-solid fa-user"></i>
+                    <img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()">
+                </div>
             </div>
-            <nav id="nav-container" class="flex-1 p-3 flex md:flex-col gap-1 overflow-x-auto"></nav>
-            <div class="p-4 border-t border-slate-100 text-xs space-y-2">
-                <div id="auth-box" class="text-slate-500"></div>
-                <div id="sync-status" class="text-slate-400"></div>
+            <nav id="nav-container"></nav>
+            <div class="side-foot">
+                <div id="auth-box"></div>
+                <div id="sync-status"></div>
             </div>
         </div>
 
-        <!-- Main content -->
-        <main class="flex-1 overflow-auto p-4 md:p-8">
-            <!-- Tab 0: Daily Tasks (owner only) -->
-            <section id="content-0" class="tab-content max-w-3xl mx-auto">
-                <h2 class="text-3xl font-semibold mb-6 text-slate-900">Daily Tasks</h2>
-                <div class="bg-white rounded-3xl p-5 md:p-6 shadow-sm border border-slate-100 mb-8">
-                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                        <input id="task-input" type="text" class="sm:col-span-5 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm" placeholder="What needs to be done?">
-                        <input id="due-date" type="date" class="sm:col-span-3 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm">
-                        <select id="priority" class="sm:col-span-2 px-4 py-3 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm bg-white">
-                            <option value="high">High</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="low">Low</option>
+        <main>
+            <!-- 0: Daily Tasks (owner) -->
+            <section id="content-0" class="tab-content wrap">
+                <h2 class="title">Today's <span class="g">Tasks</span></h2>
+                <p id="today-date" style="margin:-14px 0 22px;color:var(--muted);font-size:14px"></p>
+                <div class="card mb">
+                    <div class="form-grid">
+                        <input id="task-input" class="inp" type="text" placeholder="What needs to be done?">
+                        <input id="due-date" class="inp" type="date">
+                        <select id="priority" class="inp">
+                            <option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option>
                         </select>
-                        <button onclick="addTask()" class="sm:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-medium py-3 text-sm">Add</button>
+                        <button onclick="addTask()" class="btn btn-accent" style="justify-content:center">Add</button>
                     </div>
                 </div>
-                <div id="tasks-container" class="space-y-3"></div>
+                <div id="tasks-container"></div>
             </section>
 
-            <!-- Tab 1: Portfolio -->
-            <section id="content-1" class="tab-content active max-w-5xl mx-auto">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                    <h2 class="text-3xl font-semibold text-slate-900">Portfolio</h2>
-                    <button onclick="showProjectModal()" class="owner-only bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm whitespace-nowrap">
-                        <i class="fa-solid fa-plus"></i> New Project
-                    </button>
+            <!-- 1: Portfolio -->
+            <section id="content-1" class="tab-content active wrap-wide">
+                <div class="head-row">
+                    <h2 class="title" style="margin:0"><span class="g">Portfolio</span></h2>
+                    <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                        <span id="import-status" style="font-size:12px;color:var(--muted)"></span>
+                        <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import from GitHub</button>
+                        <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New Project</button>
+                    </div>
                 </div>
-                <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                <div id="portfolio-grid" class="grid2"></div>
             </section>
 
-            <!-- Tab 2: CV / Profile -->
-            <section id="content-2" class="tab-content max-w-3xl mx-auto">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-3xl font-semibold text-slate-900">CV / Profile</h2>
-                    <button onclick="window.print()" class="no-print bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 text-sm">
-                        <i class="fa-solid fa-download"></i> Export PDF
-                    </button>
+            <!-- 2: CV / Profile -->
+            <section id="content-2" class="tab-content wrap">
+                <div class="head-row">
+                    <h2 class="title" style="margin:0">CV <span class="g">/ Profile</span></h2>
+                    <button onclick="window.print()" class="no-print btn"><i class="fa-solid fa-download"></i> Export PDF</button>
                 </div>
-
-                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
-                    <h3 class="font-semibold text-lg mb-4 text-slate-800">Professional Summary</h3>
-                    <p id="cv-summary-view" class="text-slate-600 leading-relaxed"></p>
-                    <div class="owner-only mt-4">
-                        <textarea id="cv-summary-input" class="hidden w-full h-28 p-4 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm"></textarea>
-                        <button onclick="toggleSummaryEdit()" id="cv-summary-btn" class="text-sm bg-slate-800 text-white px-5 py-2 rounded-2xl">Edit</button>
+                <div class="card mb">
+                    <h3 class="sub">Professional Summary</h3>
+                    <p id="cv-summary-view"></p>
+                    <div class="owner-only" style="margin-top:14px">
+                        <textarea id="cv-summary-input" class="inp hidden"></textarea>
+                        <button onclick="toggleSummaryEdit()" id="cv-summary-btn" class="btn">Edit</button>
                     </div>
                 </div>
-
-                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-lg text-slate-800">Experience</h3>
-                        <button onclick="addExperience()" class="owner-only no-print text-sm text-indigo-600 font-medium">+ Add</button>
+                <div class="card mb">
+                    <div class="head-row" style="margin-bottom:14px">
+                        <h3 class="sub" style="margin:0">Experience</h3>
+                        <button onclick="addExperience()" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
-                    <div id="cv-experience" class="space-y-5"></div>
+                    <div id="cv-experience" class="stack"></div>
                 </div>
-
-                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 mb-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="font-semibold text-lg text-slate-800">Education</h3>
-                        <button onclick="addEducation()" class="owner-only no-print text-sm text-indigo-600 font-medium">+ Add</button>
+                <div class="card mb">
+                    <div class="head-row" style="margin-bottom:14px">
+                        <h3 class="sub" style="margin:0">Education</h3>
+                        <button onclick="addEducation()" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
-                    <div id="cv-education" class="space-y-4"></div>
+                    <div id="cv-education" class="stack"></div>
                 </div>
-
-                <div class="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
-                    <h3 class="font-semibold text-lg mb-4 text-slate-800">Skills</h3>
-                    <div id="cv-skills" class="flex flex-wrap gap-2"></div>
-                    <div class="owner-only no-print mt-4 flex gap-2">
-                        <input id="skill-input" type="text" class="flex-1 px-4 py-2 border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-400 text-sm" placeholder="Add a skill and press Enter" onkeydown="if(event.key==='Enter')addSkill()">
-                        <button onclick="addSkill()" class="bg-slate-800 text-white px-4 py-2 rounded-2xl text-sm">Add</button>
+                <div class="card">
+                    <h3 class="sub">Skills</h3>
+                    <div id="cv-skills" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+                    <div class="owner-only no-print" style="margin-top:16px;display:flex;gap:10px">
+                        <input id="skill-input" class="inp" type="text" placeholder="Add a skill, press Enter" onkeydown="if(event.key==='Enter')addSkill()">
+                        <button onclick="addSkill()" class="btn">Add</button>
                     </div>
                 </div>
             </section>
+
+            <!-- 3: Blog -->
+            <section id="content-3" class="tab-content wrap-wide">
+                <div id="blog-list">
+                    <div class="head-row">
+                        <h2 class="title" style="margin:0"><span class="g">Blog</span></h2>
+                        <button onclick="newPost()" class="owner-only btn"><i class="fa-solid fa-plus"></i> New Post</button>
+                    </div>
+                    <div id="blog-grid" class="grid2"></div>
+                </div>
+                <div id="blog-post" class="hidden wrap">
+                    <a class="back-link" onclick="closePost()">← All posts</a>
+                    <div id="post-content"></div>
+                </div>
+            </section>
+
+            <!-- 4: Contact -->
+            <section id="content-4" class="tab-content wrap">
+                <h2 class="title">Contact</h2>
+                <div class="card">
+                    <p style="margin-top:0">Fill this out and it'll open in your email app, addressed to me.</p>
+                    <div class="grid2" style="gap:14px">
+                        <input id="c-first" class="inp" placeholder="First name">
+                        <input id="c-last" class="inp" placeholder="Last name">
+                    </div>
+                    <input id="c-email" class="inp" placeholder="Your email" style="margin-top:14px">
+                    <textarea id="c-msg" class="inp" placeholder="Message" style="margin-top:14px;min-height:120px"></textarea>
+                    <button onclick="sendMail()" class="btn btn-accent" style="margin-top:16px"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                </div>
+            </section>
+
+            <!-- 5: Calendar (owner) -->
+            <section id="content-5" class="tab-content wrap-wide">
+                <h2 class="title">Calendar</h2>
+                <div class="cal-nav">
+                    <button class="btn" onclick="calPrev()" aria-label="Previous week"><i class="fa-solid fa-chevron-left"></i></button>
+                    <button class="btn" onclick="calToday()">This week</button>
+                    <button class="btn" onclick="calNext()" aria-label="Next week"><i class="fa-solid fa-chevron-right"></i></button>
+                    <span id="cal-week-label" style="color:var(--muted);margin-left:8px;font-size:13px"></span>
+                </div>
+                <div id="calendar-grid" class="cal-grid"></div>
+            </section>
+
+            <!-- persistent social footer -->
+            <footer class="site-footer no-print">
+                <div>Find me elsewhere</div>
+                <div class="socials">
+                    <a href="https://github.com/eokinyo" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/elly-okinyo/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://x.com/e_okinyo" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="mailto:elly.okinyo@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+                </div>
+            </footer>
         </main>
     </div>
 
-    <!-- Add project modal -->
-    <div id="project-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-md">
-            <h3 class="font-semibold text-lg mb-6">Add Project</h3>
-            <input id="proj-title" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Project title">
-            <textarea id="proj-desc" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 h-24 text-sm focus:outline-none focus:border-indigo-400" placeholder="Short description"></textarea>
-            <input id="proj-link" class="w-full border border-slate-200 rounded-2xl px-4 py-3 mb-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Link (optional) — https://...">
-            <input id="proj-status" class="w-full border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-400" placeholder="Status (optional) — e.g. Live, In progress">
-            <div class="flex gap-3 mt-8">
-                <button onclick="hideProjectModal()" class="flex-1 py-3 border border-slate-200 rounded-2xl text-sm">Cancel</button>
-                <button onclick="saveProject()" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-sm">Save</button>
+    <!-- project modal -->
+    <div id="project-modal" class="overlay hidden">
+        <div class="modal">
+            <h3 id="project-modal-title">Add Project</h3>
+            <input id="proj-title" class="inp" placeholder="Project title">
+            <textarea id="proj-desc" class="inp" placeholder="Short description"></textarea>
+            <input id="proj-link" class="inp" placeholder="Link (optional) — https://...">
+            <input id="proj-status" class="inp" placeholder="Status (optional) — e.g. Live, In progress">
+            <div class="row-actions">
+                <button onclick="hideProjectModal()" class="btn">Cancel</button>
+                <button onclick="saveProject()" class="btn btn-accent">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- blog editor modal -->
+    <div id="blog-modal" class="overlay hidden">
+        <div class="modal" style="max-width:640px">
+            <h3>Write post</h3>
+            <input id="blog-title" class="inp" placeholder="Post title">
+            <div style="margin-bottom:8px"><button type="button" onclick="insertBlogImage()" class="btn" style="font-size:12px;padding:6px 12px"><i class="fa-solid fa-image"></i> Insert image</button></div>
+            <textarea id="blog-body" class="inp" style="min-height:280px" placeholder="Write in Markdown…"></textarea>
+            <p class="md-hint"><span>Markdown:</span> <code># Heading</code> <code>**bold**</code> <code>*italic*</code> <code>[link](https://…)</code> <code>- list item</code> <code>`code`</code></p>
+            <div class="row-actions">
+                <button onclick="hideBlogModal()" class="btn">Cancel</button>
+                <button onclick="saveBlogPost()" class="btn btn-accent">Save</button>
             </div>
         </div>
     </div>
 
     <script>
-    /* ============================================================
-       OWNER IDENTITY
-       After your first sign-in, the amber banner shows your user ID.
-       Paste it here (and into your Firestore rules), then redeploy.
-       ============================================================ */
-    const OWNER_UID = "PASTE_YOUR_FIREBASE_UID_HERE";
+    const OWNER_UID = "Lm1lDi6wjRfPVbd6SfxfFZfa6RC3";
+    const BLOG_TAB = 3;
 
-    /* ============================================================
-       FIREBASE INIT (app still shows public content if this fails)
-       ============================================================ */
-    let db = null, auth = null, provider = null, firebaseReady = false;
+    /* ---- Firebase ---- */
+    let db=null, auth=null, provider=null, firebaseReady=false;
     try {
         if (window.firebaseConfig && window.firebase) {
             firebase.initializeApp(window.firebaseConfig);
-            db = firebase.firestore();
-            auth = firebase.auth();
-            provider = new firebase.auth.GoogleAuthProvider();
-            firebaseReady = true;
+            db = firebase.firestore(); auth = firebase.auth();
+            provider = new firebase.auth.GoogleAuthProvider(); firebaseReady = true;
         }
-    } catch (e) {
-        console.warn("Firebase not initialized:", e.message);
-    }
+    } catch (e) { console.warn("Firebase not initialized:", e.message); }
 
-    let currentUser = null;
-    let isOwner = false;      // true only when the signed-in Google account is the owner
-    let firstAuth = true;
+    let currentUser=null, isOwner=false, firstAuth=true;
+    function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_,r){setTimeout(function(){r(new Error("timeout"));},ms);})]); }
 
-    function withTimeout(promise, ms) {
-        return Promise.race([
-            promise,
-            new Promise(function (_, reject) { setTimeout(function () { reject(new Error("timeout")); }, ms); })
-        ]);
-    }
-
-    /* ============================================================
-       STORAGE
-       scope 'public'  -> anyone can read, only owner can write
-       scope 'private' -> only owner can read or write (enforced by rules)
-       localStorage is used as an instant cache / offline fallback.
-       ============================================================ */
-    async function loadDoc(scope, name, fallback) {
-        const cacheKey = scope + ":" + name;
-        if (firebaseReady) {
+    /* ---- storage ---- */
+    async function loadDoc(scope, name, fallback){
+        const key = scope+":"+name;
+        if (firebaseReady){
             try {
                 const snap = await withTimeout(db.collection(scope).doc(name).get(), 6000);
-                if (snap.exists && snap.data().value !== undefined) {
-                    const v = snap.data().value;
-                    localStorage.setItem(cacheKey, JSON.stringify(v));
-                    return v;
-                }
-            } catch (e) {
-                console.warn("Cloud load failed (" + cacheKey + "):", e.message);
-            }
+                if (snap.exists && snap.data().value !== undefined){ const v=snap.data().value; localStorage.setItem(key,JSON.stringify(v)); return v; }
+            } catch(e){ console.warn("Cloud load failed ("+key+"):", e.message); }
         }
-        const local = localStorage.getItem(cacheKey);
-        if (local !== null) { try { return JSON.parse(local); } catch (e) {} }
+        const local = localStorage.getItem(key);
+        if (local!==null){ try { return JSON.parse(local); } catch(e){} }
         return fallback;
     }
-
-    async function saveDoc(scope, name, value) {
-        try { localStorage.setItem(scope + ":" + name, JSON.stringify(value)); } catch (e) {}
-        if (firebaseReady) {
-            try {
-                await withTimeout(db.collection(scope).doc(name).set({ value: value }), 6000);
-                setStatus("cloud-ok");
-            } catch (e) {
-                console.warn("Cloud save failed (" + scope + ":" + name + "):", e.message);
-                setStatus("cloud-fail");
-            }
+    async function saveDoc(scope, name, value){
+        try { localStorage.setItem(scope+":"+name, JSON.stringify(value)); } catch(e){}
+        if (firebaseReady){
+            try { await withTimeout(db.collection(scope).doc(name).set({value:value}), 6000); setStatus("cloud-ok"); }
+            catch(e){ console.warn("Cloud save failed ("+scope+":"+name+"):", e.message); setStatus("cloud-fail"); }
         }
     }
-
-    function setStatus(state) {
-        const el = document.getElementById("sync-status");
-        if (!el) return;
-        if (!firebaseReady)              el.innerHTML = "💾 Saved on this device";
-        else if (state === "cloud-ok")   el.innerHTML = "☁️ Cloud sync on";
-        else if (state === "cloud-fail") el.innerHTML = "⚠️ Cloud save failed — saved locally";
-        else                             el.innerHTML = "☁️ Connecting…";
+    function setStatus(s){
+        const el=document.getElementById("sync-status"); if(!el) return;
+        if(!firebaseReady) el.textContent="💾 saved on this device";
+        else if(s==="cloud-ok") el.textContent="☁ cloud sync on";
+        else if(s==="cloud-fail") el.textContent="⚠ cloud save failed — saved locally";
+        else el.textContent="☁ connecting…";
     }
+    function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); }
+    function mdToHtml(md){ try { if(window.marked) return marked.parse(String(md||""), {breaks:true}); } catch(e){} return "<pre>"+escapeHtml(md)+"</pre>"; }
 
-    function escapeHtml(s) {
-        return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
-            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
-        });
+    /* ---- auth ---- */
+    function signIn(){ if(!auth){alert("Sign-in unavailable: Firebase isn't configured yet.");return;} auth.signInWithPopup(provider).catch(function(e){alert("Sign-in failed: "+e.message);}); }
+    function signOut(){ if(auth) auth.signOut(); }
+    function renderAuthUI(){
+        const box=document.getElementById("auth-box");
+        if(!firebaseReady) box.textContent="local mode (sign-in unavailable)";
+        else if(currentUser) box.innerHTML='<div style="color:var(--text)">'+escapeHtml(currentUser.email||"signed in")+'</div><button onclick="signOut()">sign out</button>';
+        else box.innerHTML='<button onclick="signIn()"><i class="fa-brands fa-google"></i> sign in</button>';
+        const banner=document.getElementById("owner-banner");
+        if(currentUser && !isOwner){ document.getElementById("uid-value").textContent=currentUser.uid; banner.classList.remove("hidden"); }
+        else banner.classList.add("hidden");
     }
-
-    /* ============================================================
-       AUTH
-       ============================================================ */
-    function signIn() {
-        if (!auth) { alert("Sign-in unavailable: Firebase isn't configured yet."); return; }
-        auth.signInWithPopup(provider).catch(function (e) {
-            alert("Sign-in failed: " + e.message);
-        });
-    }
-    function signOut() { if (auth) auth.signOut(); }
-
-    function renderAuthUI() {
-        const box = document.getElementById("auth-box");
-        if (!firebaseReady) {
-            box.innerHTML = "Local mode (sign-in unavailable)";
-        } else if (currentUser) {
-            box.innerHTML =
-                '<div class="truncate text-slate-600">' + escapeHtml(currentUser.email || "Signed in") + '</div>' +
-                '<button onclick="signOut()" class="mt-1 text-indigo-600 hover:underline">Sign out</button>';
-        } else {
-            box.innerHTML =
-                '<button onclick="signIn()" class="text-indigo-600 hover:underline"><i class="fa-brands fa-google mr-1"></i>Sign in</button>';
-        }
-        const banner = document.getElementById("owner-banner");
-        if (currentUser && !isOwner) {
-            document.getElementById("uid-value").textContent = currentUser.uid;
-            banner.classList.remove("hidden");
-        } else {
-            banner.classList.add("hidden");
-        }
-    }
-
-    function handleAuth(user) {
-        currentUser = user;
-        isOwner = !!(user && user.uid === OWNER_UID);
-        renderAuthUI();
-        renderNav();
-        applyMode();
-        renderPortfolio();   // re-render so owner controls appear/disappear
-        renderCv();
+    function handleAuth(user){
+        currentUser=user; isOwner=!!(user && user.uid===OWNER_UID);
+        renderAuthUI(); renderNav(); applyMode();
+        renderPortfolio(); renderCv();
+        const active=document.querySelector(".tab-content.active");
+        if(active && active.id==="content-3") renderBlogView();
         refreshPrivate();
+        route();
+    }
+    async function refreshPrivate(){
+        if(isOwner){ tasks = await loadDoc("private","tasks",[{id:Date.now(),text:"Welcome back — add a task",dueDate:todayStr(),priority:"medium",completed:false}]); }
+        else tasks=[];
+        renderTasks(); renderCalendar();
+        if(firstAuth){ firstAuth=false; if(location.hash.indexOf("#post/")!==0) switchTab(isOwner?0:1); }
+        else { const a=document.querySelector(".tab-content.active"); if(a && a.id==="content-0" && !isOwner) switchTab(1); }
     }
 
-    async function refreshPrivate() {
-        if (isOwner) {
-            tasks = await loadDoc("private", "tasks", [
-                { id: Date.now(), text: "Welcome back — add a task", dueDate: "", priority: "medium", completed: false }
-            ]);
-        } else {
-            tasks = [];
-        }
-        renderTasks();
-        if (firstAuth) {
-            firstAuth = false;
-            switchTab(isOwner ? 0 : 1);
-        } else {
-            const active = document.querySelector(".tab-content.active");
-            if (active && active.id === "content-0" && !isOwner) switchTab(1);
-        }
+    /* ---- nav / routing ---- */
+    function renderNav(){
+        const nav=document.getElementById("nav-container"); let h="";
+        if(isOwner){ h+=navBtn(0,"fa-list-check","Today's Tasks","switchTab(0)"); h+=navBtn(5,"fa-calendar-days","Calendar","switchTab(5)"); }
+        h+=navBtn(1,"fa-briefcase","Portfolio","switchTab(1)");
+        h+=navBtn(2,"fa-user","CV / Profile","switchTab(2)");
+        h+=navBtn(3,"fa-pen-nib","Blog","goBlog()");
+        h+=navBtn(4,"fa-envelope","Contact","switchTab(4)");
+        nav.innerHTML=h;
+        const active=document.querySelector(".tab-content.active");
+        if(active){ const el=document.getElementById("nav-"+active.id.split("-")[1]); if(el) el.classList.add("active"); }
     }
+    function navBtn(n,icon,label,onclick){
+        return '<button onclick="'+onclick+'" id="nav-'+n+'" class="nav-item"><i class="fa-solid '+icon+'"></i><span>'+label+'</span></button>';
+    }
+    function switchTab(n){
+        if(n!==BLOG_TAB && location.hash.indexOf("#post/")===0) history.replaceState(null,"",location.pathname+location.search);
+        document.querySelectorAll(".tab-content").forEach(function(el){el.classList.remove("active");});
+        const c=document.getElementById("content-"+n); if(c) c.classList.add("active");
+        document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
+        const nv=document.getElementById("nav-"+n); if(nv) nv.classList.add("active");
+        if(n===BLOG_TAB) renderBlogView();
+        if(n===5) renderCalendar();
+    }
+    function goBlog(){ if(location.hash.indexOf("#post/")===0) history.replaceState(null,"",location.pathname+location.search); switchTab(BLOG_TAB); }
+    function route(){
+        const active=document.querySelector(".tab-content.active");
+        if(location.hash.indexOf("#post/")===0) switchTab(BLOG_TAB);
+        else if(active && active.id==="content-3") showBlogList();
+    }
+    window.addEventListener("hashchange", route);
+    function applyMode(){ document.querySelectorAll(".owner-only").forEach(function(el){el.style.display=isOwner?"":"none";}); }
 
-    /* ============================================================
-       NAVIGATION
-       ============================================================ */
-    function renderNav() {
-        const nav = document.getElementById("nav-container");
-        let html = "";
-        if (isOwner) html += navBtn(0, "fa-list-check", "Daily Tasks");
-        html += navBtn(1, "fa-briefcase", "Portfolio");
-        html += navBtn(2, "fa-user", "CV / Profile");
-        nav.innerHTML = html;
-        const active = document.querySelector(".tab-content.active");
-        if (active) {
-            const n = active.id.split("-")[1];
-            const navEl = document.getElementById("nav-" + n);
-            if (navEl) navEl.classList.add("active");
-        }
-    }
-    function navBtn(n, icon, label) {
-        return '<button onclick="switchTab(' + n + ')" id="nav-' + n + '" ' +
-            'class="nav-item px-4 py-3 text-left flex items-center gap-3 text-slate-700 hover:bg-slate-50 rounded-xl text-sm whitespace-nowrap">' +
-            '<i class="fa-solid ' + icon + '"></i><span>' + label + '</span></button>';
-    }
-    function switchTab(n) {
-        document.querySelectorAll(".tab-content").forEach(function (el) { el.classList.remove("active"); });
-        const content = document.getElementById("content-" + n);
-        if (content) content.classList.add("active");
-        document.querySelectorAll(".nav-item").forEach(function (el) { el.classList.remove("active"); });
-        const navEl = document.getElementById("nav-" + n);
-        if (navEl) navEl.classList.add("active");
-    }
-
-    function applyMode() {
-        document.querySelectorAll(".owner-only").forEach(function (el) {
-            el.style.display = isOwner ? "" : "none";
+    /* ---- tasks (private) ---- */
+    let tasks=[];
+    function renderTasks(){
+        const c=document.getElementById("tasks-container");
+        const today=todayStr();
+        const dEl=document.getElementById("today-date"); if(dEl) dEl.textContent=fmtHuman(today);
+        const list=tasks.filter(function(t){ return !t.completed && (!t.dueDate || t.dueDate<=today); });
+        list.sort(function(a,b){
+            const ao=(a.dueDate && a.dueDate<today)?0:1, bo=(b.dueDate && b.dueDate<today)?0:1;
+            if(ao!==bo) return ao-bo;
+            const pr={high:0,medium:1,low:2};
+            return (pr[a.priority]||1)-(pr[b.priority]||1);
         });
-    }
-
-    /* ============================================================
-       DAILY TASKS (private)
-       ============================================================ */
-    let tasks = [];
-    function renderTasks() {
-        const c = document.getElementById("tasks-container");
-        if (!tasks.length) {
-            c.innerHTML = '<p class="text-slate-400 text-center py-10">No tasks yet. Add one above.</p>';
-            return;
-        }
-        const sorted = tasks.slice().sort(function (a, b) {
-            if (a.completed !== b.completed) return a.completed ? 1 : -1;
-            if (!a.dueDate) return 1;
-            if (!b.dueDate) return -1;
-            return new Date(a.dueDate) - new Date(b.dueDate);
-        });
-        c.innerHTML = sorted.map(function (t) {
-            const badge = t.priority === "high" ? "bg-red-100 text-red-700"
-                        : t.priority === "low"  ? "bg-slate-100 text-slate-600"
-                        : "bg-amber-100 text-amber-700";
-            return '<div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-4 ' + (t.completed ? "opacity-60" : "") + '">' +
-                '<input type="checkbox" ' + (t.completed ? "checked" : "") + ' onchange="toggleTask(' + t.id + ')" class="w-5 h-5 accent-indigo-600 shrink-0">' +
-                '<div class="flex-1 min-w-0">' +
-                    '<div class="font-medium ' + (t.completed ? "line-through text-slate-400" : "text-slate-800") + '">' + escapeHtml(t.text) + '</div>' +
-                    (t.dueDate ? '<div class="text-xs text-slate-500 mt-0.5">Due ' + escapeHtml(t.dueDate) + '</div>' : "") +
-                '</div>' +
-                '<span class="text-xs font-medium px-2.5 py-1 rounded-full ' + badge + ' shrink-0">' + escapeHtml(t.priority) + '</span>' +
-                '<button onclick="deleteTask(' + t.id + ')" class="text-slate-300 hover:text-red-500 shrink-0"><i class="fa-solid fa-trash-can"></i></button>' +
-            '</div>';
+        if(!list.length){ c.innerHTML='<p class="empty">Nothing left for today. Add a task above.</p>'; return; }
+        c.innerHTML=list.map(function(t){
+            const overdue=(t.dueDate && t.dueDate<today);
+            const dueLine=overdue?('<div class="task-due" style="color:var(--red-bright)">⚠ Overdue — was due '+escapeHtml(t.dueDate)+'</div>')
+                        :(t.dueDate===today?'<div class="task-due">Due today</div>':(t.dueDate?'<div class="task-due">Due '+escapeHtml(t.dueDate)+'</div>':''));
+            return '<div class="task-row">'+
+                '<input type="checkbox" onchange="toggleTask('+t.id+')" title="Mark done and clear from today">'+
+                '<div class="task-main"><div class="task-text">'+escapeHtml(t.text)+'</div>'+dueLine+'</div>'+
+                '<span class="badge badge-'+t.priority+'">'+escapeHtml(t.priority)+'</span>'+
+                '<button class="icon-btn" onclick="deleteTask('+t.id+')" title="Delete permanently"><i class="fa-solid fa-trash-can"></i></button></div>';
         }).join("");
     }
-    function addTask() {
-        if (!isOwner) return;
-        const input = document.getElementById("task-input");
-        const text = input.value.trim();
-        if (!text) { input.focus(); return; }
-        tasks.unshift({
-            id: Date.now(),
-            text: text,
-            dueDate: document.getElementById("due-date").value,
-            priority: document.getElementById("priority").value,
-            completed: false
-        });
-        saveDoc("private", "tasks", tasks);
-        renderTasks();
-        input.value = "";
-        document.getElementById("due-date").value = "";
-        input.focus();
+    function addTask(){
+        if(!isOwner) return;
+        const input=document.getElementById("task-input"); const text=input.value.trim(); if(!text){input.focus();return;}
+        tasks.unshift({id:Date.now(),text:text,dueDate:document.getElementById("due-date").value||todayStr(),priority:document.getElementById("priority").value,completed:false});
+        saveDoc("private","tasks",tasks); renderTasks(); renderCalendar();
+        input.value=""; document.getElementById("due-date").value=""; input.focus();
     }
-    function toggleTask(id) {
-        const t = tasks.find(function (x) { return x.id === id; });
-        if (t) { t.completed = !t.completed; saveDoc("private", "tasks", tasks); renderTasks(); }
-    }
-    function deleteTask(id) {
-        if (!confirm("Delete this task?")) return;
-        tasks = tasks.filter(function (x) { return x.id !== id; });
-        saveDoc("private", "tasks", tasks);
-        renderTasks();
+    function toggleTask(id){ const t=tasks.find(function(x){return x.id===id;}); if(t){t.completed=!t.completed; saveDoc("private","tasks",tasks); renderTasks(); renderCalendar();} }
+    function deleteTask(id){ if(!confirm("Delete this task?"))return; tasks=tasks.filter(function(x){return x.id!==id;}); saveDoc("private","tasks",tasks); renderTasks(); renderCalendar(); }
+
+    /* ---- today / calendar ---- */
+    function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    function fmtHuman(ds){ try{ return new Date(ds+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}); }catch(e){ return ds; } }
+    function mondayOf(d){ const x=new Date(d); const off=(x.getDay()+6)%7; x.setDate(x.getDate()-off); x.setHours(0,0,0,0); return x; }
+    function dstr(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+    let calWeekStart=mondayOf(new Date());
+    function calPrev(){ calWeekStart.setDate(calWeekStart.getDate()-7); renderCalendar(); }
+    function calNext(){ calWeekStart.setDate(calWeekStart.getDate()+7); renderCalendar(); }
+    function calToday(){ calWeekStart=mondayOf(new Date()); renderCalendar(); }
+    function renderCalendar(){
+        const grid=document.getElementById("calendar-grid"); if(!grid) return;
+        const today=todayStr(); const start=new Date(calWeekStart); const pr={high:0,medium:1,low:2}; let html="";
+        for(let i=0;i<7;i++){
+            const d=new Date(start); d.setDate(start.getDate()+i); const ds=dstr(d);
+            const dayTasks=tasks.filter(function(t){return t.dueDate===ds;}).sort(function(a,b){ if(a.completed!==b.completed) return a.completed?1:-1; return (pr[a.priority]||1)-(pr[b.priority]||1); });
+            html+='<div class="cal-day'+(ds===today?" cal-today":"")+'">'+
+                '<div class="cal-day-head">'+d.toLocaleDateString(undefined,{weekday:"short"})+' <span>'+d.getDate()+'</span></div>'+
+                (dayTasks.length?dayTasks.map(function(t){
+                    return '<div class="cal-task p-'+t.priority+(t.completed?" done":"")+'" onclick="toggleTask('+t.id+')">'+escapeHtml(t.text)+'</div>';
+                }).join(""):'<div class="cal-empty">—</div>')+
+            '</div>';
+        }
+        grid.innerHTML=html;
+        const label=document.getElementById("cal-week-label");
+        if(label){ const end=new Date(start); end.setDate(start.getDate()+6);
+            label.textContent=start.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
     }
 
-    /* ============================================================
-       PORTFOLIO (public)
-       ============================================================ */
-    let portfolio = [];
-    function renderPortfolio() {
-        const grid = document.getElementById("portfolio-grid");
-        if (!portfolio.length) { grid.innerHTML = '<p class="text-slate-400">No projects yet.</p>'; return; }
-        grid.innerHTML = portfolio.map(function (p, i) {
-            const link = p.link ? '<a href="' + escapeHtml(p.link) + '" target="_blank" rel="noopener" class="text-indigo-600 text-sm font-medium">View →</a>' : '<span></span>';
-            const status = p.status ? '<span class="text-xs px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">' + escapeHtml(p.status) + '</span>' : "";
-            const del = isOwner ? '<button onclick="deleteProject(' + i + ')" class="no-print text-slate-300 hover:text-red-500 ml-2"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
-            return '<div class="bg-white border border-slate-100 rounded-3xl p-6 hover:shadow-md transition">' +
-                '<div class="flex items-start justify-between gap-2">' +
-                    '<h4 class="font-semibold text-slate-800">' + escapeHtml(p.title) + '</h4>' + del +
-                '</div>' +
-                '<p class="text-slate-600 text-sm mt-2">' + escapeHtml(p.desc) + '</p>' +
-                '<div class="mt-4 flex items-center justify-between">' + link + status + '</div>' +
-            '</div>';
+    /* ---- portfolio (public) ---- */
+    let portfolio=[];
+    function renderPortfolio(){
+        const grid=document.getElementById("portfolio-grid");
+        if(!portfolio.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
+        grid.innerHTML=portfolio.map(function(p,i){
+            const link=p.link?'<a href="'+escapeHtml(p.link)+'" target="_blank" rel="noopener">View →</a>':'<span></span>';
+            const status=p.status?'<span class="badge-status">'+escapeHtml(p.status)+'</span>':"";
+            const ctrls=isOwner?('<div class="card-ctrls no-print">'+
+                '<button class="icon-btn" title="Move up" onclick="moveProject('+i+',-1)"><i class="fa-solid fa-arrow-up"></i></button>'+
+                '<button class="icon-btn" title="Move down" onclick="moveProject('+i+',1)"><i class="fa-solid fa-arrow-down"></i></button>'+
+                '<button class="icon-btn" title="Edit" onclick="showProjectModal('+i+')"><i class="fa-solid fa-pen"></i></button>'+
+                '<button class="icon-btn" title="Delete" onclick="deleteProject('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
+            return '<div class="card"><div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
+                '<p class="card-desc">'+escapeHtml(p.desc)+'</p><div class="card-foot">'+link+status+'</div></div>';
         }).join("");
     }
-    function showProjectModal() { if (isOwner) document.getElementById("project-modal").classList.remove("hidden"); }
-    function hideProjectModal() { document.getElementById("project-modal").classList.add("hidden"); }
-    function saveProject() {
-        const title = document.getElementById("proj-title").value.trim();
-        if (!title) return;
-        portfolio.unshift({
-            title: title,
-            desc: document.getElementById("proj-desc").value.trim() || "No description",
-            link: document.getElementById("proj-link").value.trim(),
-            status: document.getElementById("proj-status").value.trim()
-        });
-        saveDoc("public", "portfolio", portfolio);
-        renderPortfolio();
-        hideProjectModal();
-        ["proj-title", "proj-desc", "proj-link", "proj-status"].forEach(function (id) { document.getElementById(id).value = ""; });
+    let editingProjectIndex=null;
+    function showProjectModal(i){
+        if(!isOwner) return;
+        const editing=(typeof i==="number");
+        editingProjectIndex=editing?i:null;
+        document.getElementById("project-modal-title").textContent=editing?"Edit Project":"Add Project";
+        const p=editing?portfolio[i]:{title:"",desc:"",link:"",status:""};
+        document.getElementById("proj-title").value=p.title||"";
+        document.getElementById("proj-desc").value=(p.desc==="No description"?"":(p.desc||""));
+        document.getElementById("proj-link").value=p.link||"";
+        document.getElementById("proj-status").value=p.status||"";
+        document.getElementById("project-modal").classList.remove("hidden");
     }
-    function deleteProject(i) {
-        if (!confirm("Delete this project?")) return;
-        portfolio.splice(i, 1);
-        saveDoc("public", "portfolio", portfolio);
-        renderPortfolio();
+    function hideProjectModal(){ document.getElementById("project-modal").classList.add("hidden"); editingProjectIndex=null; }
+    function saveProject(){
+        const title=document.getElementById("proj-title").value.trim(); if(!title)return;
+        const item={title:title,desc:document.getElementById("proj-desc").value.trim()||"No description",link:document.getElementById("proj-link").value.trim(),status:document.getElementById("proj-status").value.trim()};
+        if(editingProjectIndex!==null && portfolio[editingProjectIndex]) portfolio[editingProjectIndex]=item;
+        else portfolio.unshift(item);
+        saveDoc("public","portfolio",portfolio); renderPortfolio(); hideProjectModal();
+        ["proj-title","proj-desc","proj-link","proj-status"].forEach(function(id){document.getElementById(id).value="";});
     }
-
-    /* ============================================================
-       CV / PROFILE (public)
-       ============================================================ */
-    let cv = { summary: "", experience: [], education: [], skills: [] };
-    function renderCv() {
-        document.getElementById("cv-summary-view").textContent = cv.summary || "No summary yet.";
-
-        const exp = document.getElementById("cv-experience");
-        exp.innerHTML = cv.experience.length ? cv.experience.map(function (e, i) {
-            const del = isOwner ? '<button onclick="deleteExperience(' + i + ')" class="no-print text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
-            return '<div class="border-l-2 border-indigo-100 pl-4">' +
-                '<div class="flex items-start justify-between gap-2">' +
-                    '<div class="font-medium text-slate-800">' + escapeHtml(e.role) + ' • ' + escapeHtml(e.company) + '</div>' + del +
-                '</div>' +
-                '<div class="text-xs text-slate-500 mb-1">' + escapeHtml(e.period) + '</div>' +
-                (e.description ? '<p class="text-sm text-slate-600">' + escapeHtml(e.description) + '</p>' : "") +
-            '</div>';
-        }).join("") : '<p class="text-slate-400 text-sm">Nothing added yet.</p>';
-
-        const edu = document.getElementById("cv-education");
-        edu.innerHTML = cv.education.length ? cv.education.map(function (e, i) {
-            const del = isOwner ? '<button onclick="deleteEducation(' + i + ')" class="no-print text-slate-300 hover:text-red-500"><i class="fa-solid fa-trash-can text-sm"></i></button>' : "";
-            return '<div class="flex items-start justify-between gap-2">' +
-                '<div><div class="font-medium text-slate-800">' + escapeHtml(e.degree) + '</div>' +
-                '<div class="text-xs text-slate-500">' + escapeHtml(e.school) + ' • ' + escapeHtml(e.period) + '</div></div>' + del +
-            '</div>';
-        }).join("") : '<p class="text-slate-400 text-sm">Nothing added yet.</p>';
-
-        const sk = document.getElementById("cv-skills");
-        sk.innerHTML = cv.skills.length ? cv.skills.map(function (s, i) {
-            const del = isOwner ? '<button onclick="deleteSkill(' + i + ')" class="no-print ml-2 text-slate-400 hover:text-red-500">&times;</button>' : "";
-            return '<span class="inline-flex items-center text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full">' + escapeHtml(s) + del + '</span>';
-        }).join("") : '<p class="text-slate-400 text-sm">No skills added yet.</p>';
+    function moveProject(i,dir){
+        const j=i+dir; if(j<0||j>=portfolio.length) return;
+        const t=portfolio[i]; portfolio[i]=portfolio[j]; portfolio[j]=t;
+        saveDoc("public","portfolio",portfolio); renderPortfolio();
     }
-    function toggleSummaryEdit() {
-        if (!isOwner) return;
-        const view = document.getElementById("cv-summary-view");
-        const input = document.getElementById("cv-summary-input");
-        const btn = document.getElementById("cv-summary-btn");
-        if (input.classList.contains("hidden")) {
-            input.value = cv.summary;
-            input.classList.remove("hidden");
-            view.classList.add("hidden");
-            btn.textContent = "Save";
-        } else {
-            cv.summary = input.value.trim();
-            input.classList.add("hidden");
-            view.classList.remove("hidden");
-            btn.textContent = "Edit";
-            saveDoc("public", "cv", cv);
-            renderCv();
+    function deleteProject(i){ if(!confirm("Delete this project?"))return; portfolio.splice(i,1); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
+    async function importGithub(){
+        if(!isOwner) return;
+        const btn=document.getElementById("gh-import-btn"), statusEl=document.getElementById("import-status");
+        const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Importing…'; statusEl.textContent="";
+        try {
+            const res=await fetch("https://api.github.com/users/eokinyo/repos?sort=updated&per_page=100");
+            if(!res.ok){
+                if(res.status===403) throw new Error("GitHub rate limit reached — try again shortly.");
+                if(res.status===404) throw new Error("GitHub user not found.");
+                throw new Error("GitHub request failed ("+res.status+").");
+            }
+            const repos=await res.json();
+            const seen=new Set(portfolio.map(function(p){return String(p.link||"").toLowerCase();}));
+            let added=0;
+            repos.filter(function(r){ return !r.fork && !r.archived && String(r.name).toLowerCase()!=="eokinyo"; })
+                 .forEach(function(r){
+                    const link=r.html_url;
+                    if(seen.has(String(link).toLowerCase())) return;
+                    seen.add(String(link).toLowerCase());
+                    portfolio.push({title:r.name,desc:r.description||"No description",link:link,status:r.language||""});
+                    added++;
+                 });
+            if(added>0){ saveDoc("public","portfolio",portfolio); renderPortfolio(); }
+            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+" — now edit or delete to curate."):"No new repos to import.";
+        } catch(e){
+            statusEl.textContent=e.message||"Import failed.";
+        } finally {
+            btn.disabled=false; btn.innerHTML=orig;
+            setTimeout(function(){ if(statusEl) statusEl.textContent=""; }, 9000);
         }
     }
-    function addExperience() {
-        if (!isOwner) return;
-        const role = prompt("Role / job title:");
-        if (role === null) return;
-        cv.experience.push({
-            role: role,
-            company: prompt("Company / organisation:") || "",
-            period: prompt("Period (e.g. 2024 – Present):") || "",
-            description: prompt("Short description (optional):") || ""
-        });
-        saveDoc("public", "cv", cv);
-        renderCv();
-    }
-    function deleteExperience(i) { if (isOwner && confirm("Delete this entry?")) { cv.experience.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
-    function addEducation() {
-        if (!isOwner) return;
-        const degree = prompt("Degree / qualification:");
-        if (degree === null) return;
-        cv.education.push({
-            degree: degree,
-            school: prompt("School / institution:") || "",
-            period: prompt("Period (e.g. 2019 – 2023):") || ""
-        });
-        saveDoc("public", "cv", cv);
-        renderCv();
-    }
-    function deleteEducation(i) { if (isOwner && confirm("Delete this entry?")) { cv.education.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
-    function addSkill() {
-        if (!isOwner) return;
-        const input = document.getElementById("skill-input");
-        const s = input.value.trim();
-        if (!s) return;
-        cv.skills.push(s);
-        saveDoc("public", "cv", cv);
-        renderCv();
-        input.value = "";
-        input.focus();
-    }
-    function deleteSkill(i) { if (isOwner) { cv.skills.splice(i, 1); saveDoc("public", "cv", cv); renderCv(); } }
 
-    /* ============================================================
-       INIT
-       ============================================================ */
-    async function loadPublic() {
-        portfolio = await loadDoc("public", "portfolio", [
-            { title: "Personal Hub", desc: "This site — tasks, portfolio and CV in one place.", link: "", status: "Live" }
-        ]);
+    /* ---- cv (public) ---- */
+    let cv={summary:"",experience:[],education:[],skills:[]};
+    function renderCv(){
+        document.getElementById("cv-summary-view").textContent=cv.summary||"No summary yet.";
+        const exp=document.getElementById("cv-experience");
+        exp.innerHTML=cv.experience.length?cv.experience.map(function(e,i){
+            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteExperience('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            return '<div class="exp"><div class="card-head"><div class="exp-role">'+escapeHtml(e.role)+' • '+escapeHtml(e.company)+'</div>'+del+'</div>'+
+                '<div class="exp-period">'+escapeHtml(e.period)+'</div>'+(e.description?'<p class="exp-desc">'+escapeHtml(e.description)+'</p>':"")+'</div>';
+        }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
+        const edu=document.getElementById("cv-education");
+        edu.innerHTML=cv.education.length?cv.education.map(function(e,i){
+            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteEducation('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.degree)+'</div><div class="exp-period">'+escapeHtml(e.school)+' • '+escapeHtml(e.period)+'</div></div>'+del+'</div>';
+        }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
+        const sk=document.getElementById("cv-skills");
+        sk.innerHTML=cv.skills.length?cv.skills.map(function(s,i){
+            const del=isOwner?'<button onclick="deleteSkill('+i+')">&times;</button>':"";
+            return '<span class="tag">'+escapeHtml(s)+del+'</span>';
+        }).join(""):'<p class="empty" style="text-align:left">No skills added yet.</p>';
+    }
+    function toggleSummaryEdit(){
+        if(!isOwner)return;
+        const view=document.getElementById("cv-summary-view"),input=document.getElementById("cv-summary-input"),btn=document.getElementById("cv-summary-btn");
+        if(input.classList.contains("hidden")){ input.value=cv.summary; input.classList.remove("hidden"); view.classList.add("hidden"); btn.textContent="Save"; }
+        else { cv.summary=input.value.trim(); input.classList.add("hidden"); view.classList.remove("hidden"); btn.textContent="Edit"; saveDoc("public","cv",cv); renderCv(); }
+    }
+    function addExperience(){ if(!isOwner)return; const role=prompt("Role / job title:"); if(role===null)return;
+        cv.experience.push({role:role,company:prompt("Company / organisation:")||"",period:prompt("Period (e.g. 2024 – Present):")||"",description:prompt("Short description (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    function deleteExperience(i){ if(isOwner&&confirm("Delete this entry?")){cv.experience.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function addEducation(){ if(!isOwner)return; const degree=prompt("Degree / qualification:"); if(degree===null)return;
+        cv.education.push({degree:degree,school:prompt("School / institution:")||"",period:prompt("Period (e.g. 2019 – 2023):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    function deleteEducation(i){ if(isOwner&&confirm("Delete this entry?")){cv.education.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function addSkill(){ if(!isOwner)return; const input=document.getElementById("skill-input"); const s=input.value.trim(); if(!s)return; cv.skills.push(s); saveDoc("public","cv",cv); renderCv(); input.value=""; input.focus(); }
+    function deleteSkill(i){ if(isOwner){cv.skills.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+
+    /* ---- blog (public) ---- */
+    let blog=[], editingSlug=null;
+    function insertBlogImage(){
+        if(!isOwner) return;
+        const url=prompt("Image URL (or a path in your site, e.g. img/photo.jpg):"); if(!url) return;
+        const alt=prompt("Caption / alt text (optional):")||"";
+        const ta=document.getElementById("blog-body");
+        const snippet="\n\n!["+alt+"]("+url.trim()+")\n\n";
+        const pos=(typeof ta.selectionStart==="number")?ta.selectionStart:ta.value.length;
+        ta.value=ta.value.slice(0,pos)+snippet+ta.value.slice(pos);
+        ta.focus();
+    }
+    function slugify(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+    function excerpt(md){ const t=String(md||"").replace(/[#*_`>\[\]()!-]/g," ").replace(/\s+/g," ").trim(); return t.length>140?t.slice(0,140)+"…":t; }
+    function renderBlogView(){ const m=location.hash.match(/^#post\/(.+)$/); if(m) showBlogPost(decodeURIComponent(m[1])); else showBlogList(); }
+    function showBlogList(){
+        document.getElementById("blog-post").classList.add("hidden");
+        document.getElementById("blog-list").classList.remove("hidden");
+        const g=document.getElementById("blog-grid");
+        if(!blog.length){ g.innerHTML='<p class="empty">No posts yet.</p>'; return; }
+        const sorted=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
+        g.innerHTML=sorted.map(function(p){
+            return '<div class="card blog-card" onclick="openPost(\''+p.slug+'\')">'+
+                '<div class="card-title">'+escapeHtml(p.title)+'</div>'+
+                '<div class="exp-period" style="margin-top:4px">'+escapeHtml(p.date||"")+'</div>'+
+                '<p class="card-desc">'+escapeHtml(excerpt(p.body))+'</p>'+
+                '<div class="card-foot"><span class="g">Read →</span></div></div>';
+        }).join("");
+    }
+    function openPost(slug){ location.hash="post/"+encodeURIComponent(slug); }
+    function closePost(){ history.replaceState(null,"",location.pathname+location.search); showBlogList(); }
+    function showBlogPost(slug){
+        const p=blog.find(function(x){return x.slug===slug;});
+        document.getElementById("blog-list").classList.add("hidden");
+        document.getElementById("blog-post").classList.remove("hidden");
+        const pc=document.getElementById("post-content");
+        if(!p){ pc.innerHTML='<p class="empty">Post not found.</p>'; return; }
+        const owner=isOwner?'<div class="no-print" style="display:flex;gap:10px;margin-top:22px"><button class="btn" onclick="editPost(\''+p.slug+'\')">Edit</button><button class="btn" onclick="deletePost(\''+p.slug+'\')">Delete</button></div>':"";
+        pc.innerHTML='<h2 class="title" style="margin-bottom:4px">'+escapeHtml(p.title)+'</h2>'+
+            '<div class="exp-period" style="margin-bottom:22px">'+escapeHtml(p.date||"")+'</div>'+
+            '<div class="prose">'+mdToHtml(p.body)+'</div>'+owner;
+        window.scrollTo(0,0);
+    }
+    function newPost(){ if(!isOwner)return; editingSlug=null; document.getElementById("blog-title").value=""; document.getElementById("blog-body").value=""; document.getElementById("blog-modal").classList.remove("hidden"); }
+    function editPost(slug){ if(!isOwner)return; const p=blog.find(function(x){return x.slug===slug;}); if(!p)return; editingSlug=slug; document.getElementById("blog-title").value=p.title; document.getElementById("blog-body").value=p.body; document.getElementById("blog-modal").classList.remove("hidden"); }
+    function hideBlogModal(){ document.getElementById("blog-modal").classList.add("hidden"); }
+    function saveBlogPost(){
+        const title=document.getElementById("blog-title").value.trim(); if(!title)return;
+        const body=document.getElementById("blog-body").value;
+        if(editingSlug){ const p=blog.find(function(x){return x.slug===editingSlug;}); if(p){p.title=title;p.body=body;} }
+        else {
+            let slug=slugify(title)||("post-"+Date.now());
+            if(blog.some(function(x){return x.slug===slug;})) slug=slug+"-"+Date.now().toString(36).slice(-4);
+            blog.unshift({id:Date.now(),slug:slug,title:title,body:body,date:new Date().toISOString().slice(0,10)});
+            editingSlug=slug;
+        }
+        saveDoc("public","blog",blog); hideBlogModal();
+        location.hash="post/"+encodeURIComponent(editingSlug); renderBlogView();
+    }
+    function deletePost(slug){ if(!isOwner)return; if(!confirm("Delete this post?"))return; blog=blog.filter(function(x){return x.slug!==slug;}); saveDoc("public","blog",blog); closePost(); }
+
+    /* ---- contact ---- */
+    function sendMail(){
+        function v(id){ return document.getElementById(id).value.trim(); }
+        const name=(v("c-first")+" "+v("c-last")).trim();
+        const subject="Website message"+(name?(" from "+name):"");
+        const body="Name: "+name+"\nEmail: "+v("c-email")+"\n\n"+v("c-msg");
+        window.location.href="mailto:elly.okinyo@gmail.com?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+    }
+
+    /* ---- init ---- */
+    async function loadPublic(){
+        portfolio = await loadDoc("public","portfolio",[{title:"Personal Hub",desc:"This site — tasks, portfolio, CV and blog, with a private login.",link:"",status:"Live"}]);
         renderPortfolio();
-        cv = await loadDoc("public", "cv", {
-            summary: "Passionate about building useful tools and solving real problems. Open to opportunities.",
-            experience: [], education: [], skills: []
-        });
+        cv = await loadDoc("public","cv",{summary:"Junior developer building practical web tools. Comfortable shipping small projects end to end, and always learning.",experience:[],education:[],skills:[]});
         renderCv();
-        setStatus(firebaseReady ? "cloud-ok" : "local");
+        blog = await loadDoc("public","blog",[{id:1,slug:"welcome",title:"Welcome to my blog",body:"# Hello 👋\n\nThis is my first post. I'll write here about what I'm building and learning.\n\n- Built with vanilla JS + Firebase\n- Hosted on Firebase Hosting\n\nMore soon.",date:new Date().toISOString().slice(0,10)}]);
+        setStatus(firebaseReady?"cloud-ok":"local");
+        route();
     }
-
-    window.onload = function () {
+    window.onload = function(){
         setStatus("connecting");
-        renderNav();
-        applyMode();
-        loadPublic();
-        if (firebaseReady) {
-            auth.onAuthStateChanged(handleAuth);
-        } else {
-            handleAuth(null);
-        }
-        document.getElementById("task-input").addEventListener("keydown", function (e) {
-            if (e.key === "Enter") addTask();
-        });
+        renderNav(); applyMode(); loadPublic();
+        if(firebaseReady){ auth.onAuthStateChanged(handleAuth); } else { handleAuth(null); }
+        document.getElementById("task-input").addEventListener("keydown", function(e){ if(e.key==="Enter") addTask(); });
     };
     </script>
 </body>
