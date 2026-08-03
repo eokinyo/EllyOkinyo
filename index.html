@@ -124,6 +124,8 @@
 
     .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .card-ctrls{display:flex;gap:8px;flex-shrink:0}
+    .bulk-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:16px;background:rgba(184,187,38,.06);font-size:14px}
+    .card.selected{border-color:var(--olive);background:rgba(184,187,38,.08)}
     .card-title{color:var(--cream);font-weight:700;font-size:17px}
     .card-desc{margin:8px 0 0;font-size:14px} .card-foot{margin-top:16px;display:flex;align-items:center;justify-content:space-between}
 
@@ -241,10 +243,13 @@
                     <h2 class="title" style="margin:0"><span class="g">Portfolio</span></h2>
                     <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
                         <span id="import-status" style="font-size:12px;color:var(--muted)"></span>
-                        <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import from GitHub</button>
-                        <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New Project</button>
+                        <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import</button>
+                        <button onclick="sortPortfolioRecent()" class="btn"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort: recent</button>
+                        <button id="select-btn" onclick="toggleSelectMode()" class="btn"><i class="fa-solid fa-check-double"></i> Select</button>
+                        <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New</button>
                     </div>
                 </div>
+                <div id="portfolio-bulk"></div>
                 <div id="portfolio-grid" class="grid2"></div>
             </section>
 
@@ -572,19 +577,34 @@
     }
 
     /* ---- portfolio (public) ---- */
-    let portfolio=[];
+    let portfolio=[], selectMode=false, selected=new Set();
     function renderPortfolio(){
         const grid=document.getElementById("portfolio-grid");
+        const bulk=document.getElementById("portfolio-bulk");
+        if(bulk){
+            if(isOwner && selectMode){
+                bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
+                    '<button class="btn" onclick="selectAllProjects()">'+((portfolio.length&&selected.size===portfolio.length)?"Clear all":"Select all")+'</button>'+
+                    '<button class="btn" onclick="deleteSelectedProjects()"><i class="fa-solid fa-trash-can"></i> Delete selected</button>'+
+                    '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
+            } else bulk.innerHTML="";
+        }
         if(!portfolio.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
         grid.innerHTML=portfolio.map(function(p,i){
-            const link=p.link?'<a href="'+escapeHtml(p.link)+'" target="_blank" rel="noopener">View →</a>':'<span></span>';
+            const link=p.link?'<a href="'+escapeHtml(p.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View →</a>':'<span></span>';
             const status=p.status?'<span class="badge-status">'+escapeHtml(p.status)+'</span>':"";
-            const ctrls=isOwner?('<div class="card-ctrls no-print">'+
-                '<button class="icon-btn" title="Move up" onclick="moveProject('+i+',-1)"><i class="fa-solid fa-arrow-up"></i></button>'+
-                '<button class="icon-btn" title="Move down" onclick="moveProject('+i+',1)"><i class="fa-solid fa-arrow-down"></i></button>'+
-                '<button class="icon-btn" title="Edit" onclick="showProjectModal('+i+')"><i class="fa-solid fa-pen"></i></button>'+
-                '<button class="icon-btn" title="Delete" onclick="deleteProject('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
-            return '<div class="card"><div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
+            let ctrls="", cardOpen='<div class="card">';
+            if(isOwner && selectMode){
+                cardOpen='<div class="card'+(selected.has(i)?" selected":"")+'" onclick="toggleSelect('+i+')" style="cursor:pointer">';
+                ctrls='<input type="checkbox" '+(selected.has(i)?"checked":"")+' class="no-print" style="pointer-events:none">';
+            } else if(isOwner){
+                ctrls='<div class="card-ctrls no-print">'+
+                    '<button class="icon-btn" title="Move up" onclick="moveProject('+i+',-1)"><i class="fa-solid fa-arrow-up"></i></button>'+
+                    '<button class="icon-btn" title="Move down" onclick="moveProject('+i+',1)"><i class="fa-solid fa-arrow-down"></i></button>'+
+                    '<button class="icon-btn" title="Edit" onclick="showProjectModal('+i+')"><i class="fa-solid fa-pen"></i></button>'+
+                    '<button class="icon-btn" title="Delete" onclick="deleteProject('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>';
+            }
+            return cardOpen+'<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
                 '<p class="card-desc">'+escapeHtml(p.desc)+'</p><div class="card-foot">'+link+status+'</div></div>';
         }).join("");
     }
@@ -616,30 +636,42 @@
         saveDoc("public","portfolio",portfolio); renderPortfolio();
     }
     function deleteProject(i){ if(!confirm("Delete this project?"))return; portfolio.splice(i,1); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
+    function toggleSelectMode(){ if(!isOwner) return; selectMode=!selectMode; selected.clear(); const b=document.getElementById("select-btn"); if(b) b.innerHTML=selectMode?'<i class="fa-solid fa-xmark"></i> Cancel':'<i class="fa-solid fa-check-double"></i> Select'; renderPortfolio(); }
+    function toggleSelect(i){ if(selected.has(i)) selected.delete(i); else selected.add(i); renderPortfolio(); }
+    function selectAllProjects(){ if(selected.size===portfolio.length){ selected.clear(); } else { selected=new Set(portfolio.map(function(_,i){return i;})); } renderPortfolio(); }
+    function deleteSelectedProjects(){
+        if(!isOwner || !selected.size) return;
+        if(!confirm("Delete "+selected.size+" selected project"+(selected.size>1?"s":"")+"?")) return;
+        Array.from(selected).sort(function(a,b){return b-a;}).forEach(function(i){ portfolio.splice(i,1); });
+        selected.clear(); selectMode=false;
+        const b=document.getElementById("select-btn"); if(b) b.innerHTML='<i class="fa-solid fa-check-double"></i> Select';
+        saveDoc("public","portfolio",portfolio); renderPortfolio();
+    }
+    function projDate(p){ return p.updated?new Date(p.updated).getTime():Infinity; }
+    function sortPortfolioRecent(){ if(!isOwner) return; selected.clear(); portfolio.sort(function(a,b){ return projDate(b)-projDate(a); }); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
     async function importGithub(){
         if(!isOwner) return;
         const btn=document.getElementById("gh-import-btn"), statusEl=document.getElementById("import-status");
         const orig=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Importing…'; statusEl.textContent="";
         try {
-            const res=await fetch("https://api.github.com/users/eokinyo/repos?sort=updated&per_page=100");
+            const res=await fetch("https://api.github.com/users/eokinyo/repos?sort=pushed&per_page=100");
             if(!res.ok){
                 if(res.status===403) throw new Error("GitHub rate limit reached — try again shortly.");
                 if(res.status===404) throw new Error("GitHub user not found.");
                 throw new Error("GitHub request failed ("+res.status+").");
             }
             const repos=await res.json();
-            const seen=new Set(portfolio.map(function(p){return String(p.link||"").toLowerCase();}));
-            let added=0;
+            let added=0, changed=false;
             repos.filter(function(r){ return !r.fork && !r.archived && String(r.name).toLowerCase()!=="eokinyo"; })
                  .forEach(function(r){
-                    const link=r.html_url;
-                    if(seen.has(String(link).toLowerCase())) return;
-                    seen.add(String(link).toLowerCase());
-                    portfolio.push({title:r.name,desc:r.description||"No description",link:link,status:r.language||""});
-                    added++;
+                    const link=r.html_url, upd=r.pushed_at||r.updated_at||"";
+                    const existing=portfolio.find(function(p){return String(p.link||"").toLowerCase()===String(link).toLowerCase();});
+                    if(existing){ if(existing.updated!==upd){ existing.updated=upd; changed=true; } return; }
+                    portfolio.push({title:r.name,desc:r.description||"No description",link:link,status:r.language||"",updated:upd});
+                    added++; changed=true;
                  });
-            if(added>0){ saveDoc("public","portfolio",portfolio); renderPortfolio(); }
-            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+" — now edit or delete to curate."):"No new repos to import.";
+            if(changed){ selected.clear(); portfolio.sort(function(a,b){ return projDate(b)-projDate(a); }); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
+            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+", newest first — use Select to trim."):(changed?"Refreshed & sorted by most recent.":"No new repos to import.");
         } catch(e){
             statusEl.textContent=e.message||"Import failed.";
         } finally {
