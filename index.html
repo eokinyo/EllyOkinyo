@@ -190,7 +190,7 @@
         <div id="sidebar">
             <div class="brand">
                 <h1>Elly Okinyo</h1>
-                <div class="role">Economist <span>· Researcher &amp; Data Analyst</span></div>
+                <div class="role" id="sidebar-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
                 <div class="avatar-wrap">
                     <i class="fa-solid fa-user"></i>
                     <img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()">
@@ -209,7 +209,7 @@
                 <div class="home-hero">
                     <div class="avatar-wrap home-avatar"><i class="fa-solid fa-user"></i><img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()"></div>
                     <h1 class="home-name">Elly Okinyo</h1>
-                    <div class="home-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
+                    <div class="home-role" id="home-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
                     <p id="home-summary" class="home-intro"></p>
                     <div class="home-cta">
                         <button class="btn btn-accent" onclick="switchTab(1)">View portfolio</button>
@@ -263,6 +263,7 @@
                     <h3 class="sub">Professional Summary</h3>
                     <p id="cv-summary-view"></p>
                     <div class="owner-only" style="margin-top:14px">
+                        <input id="cv-tagline-input" class="inp hidden" placeholder="Tagline (e.g. Economist · Data Analyst)" style="margin-bottom:10px">
                         <textarea id="cv-summary-input" class="inp hidden"></textarea>
                         <button onclick="toggleSummaryEdit()" id="cv-summary-btn" class="btn">Edit</button>
                     </div>
@@ -270,14 +271,14 @@
                 <div class="card mb">
                     <div class="head-row" style="margin-bottom:14px">
                         <h3 class="sub" style="margin:0">Experience</h3>
-                        <button onclick="addExperience()" class="owner-only no-print btn btn-accent">+ Add</button>
+                        <button onclick="openEntryModal('experience')" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
                     <div id="cv-experience" class="stack"></div>
                 </div>
                 <div class="card mb">
                     <div class="head-row" style="margin-bottom:14px">
                         <h3 class="sub" style="margin:0">Education</h3>
-                        <button onclick="addEducation()" class="owner-only no-print btn btn-accent">+ Add</button>
+                        <button onclick="openEntryModal('education')" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
                     <div id="cv-education" class="stack"></div>
                 </div>
@@ -292,21 +293,21 @@
                 <div class="card mb">
                     <div class="head-row" style="margin-bottom:14px">
                         <h3 class="sub" style="margin:0">Certifications</h3>
-                        <button onclick="addCertification()" class="owner-only no-print btn btn-accent">+ Add</button>
+                        <button onclick="openEntryModal('certifications')" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
                     <div id="cv-certifications" class="stack"></div>
                 </div>
                 <div class="card mb">
                     <div class="head-row" style="margin-bottom:14px">
                         <h3 class="sub" style="margin:0">Recommendations</h3>
-                        <button onclick="addRecommendation()" class="owner-only no-print btn btn-accent">+ Add</button>
+                        <button onclick="openEntryModal('recommendations')" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
                     <div id="cv-recommendations" class="stack"></div>
                 </div>
                 <div class="card">
                     <div class="head-row" style="margin-bottom:14px">
                         <h3 class="sub" style="margin:0">Languages</h3>
-                        <button onclick="addLanguage()" class="owner-only no-print btn btn-accent">+ Add</button>
+                        <button onclick="openEntryModal('languages')" class="owner-only no-print btn btn-accent">+ Add</button>
                     </div>
                     <div id="cv-languages" class="stack"></div>
                 </div>
@@ -384,6 +385,18 @@
             <div class="row-actions">
                 <button onclick="hideProjectModal()" class="btn">Cancel</button>
                 <button onclick="saveProject()" class="btn btn-accent">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- profile entry modal -->
+    <div id="entry-modal" class="overlay hidden">
+        <div class="modal">
+            <h3 id="entry-modal-title">Add</h3>
+            <div id="entry-fields"></div>
+            <div class="row-actions">
+                <button onclick="hideEntryModal()" class="btn">Cancel</button>
+                <button onclick="saveEntry()" class="btn btn-accent">Save</button>
             </div>
         </div>
     </div>
@@ -682,19 +695,23 @@
 
     /* ---- cv (public) ---- */
     let cv={summary:"",experience:[],education:[],skills:[]};
+    function taglineHtml(t){ const s=String(t); const idx=s.indexOf("·"); if(idx>=0){ return escapeHtml(s.slice(0,idx).trim())+' <span>· '+escapeHtml(s.slice(idx+1).trim())+'</span>'; } return escapeHtml(s); }
     function renderCv(){
         document.getElementById("cv-summary-view").textContent=cv.summary||"No summary yet.";
         const hs=document.getElementById("home-summary"); if(hs) hs.textContent=cv.summary||"";
+        const tagline=cv.tagline||"Economist · Researcher & Data Analyst";
+        const hr=document.getElementById("home-role"); if(hr) hr.innerHTML=taglineHtml(tagline);
+        const sr=document.getElementById("sidebar-role"); if(sr) sr.innerHTML=taglineHtml(tagline);
         const exp=document.getElementById("cv-experience");
         exp.innerHTML=cv.experience.length?cv.experience.map(function(e,i){
-            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteExperience('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
-            return '<div class="exp"><div class="card-head"><div class="exp-role">'+escapeHtml(e.role)+' • '+escapeHtml(e.company)+'</div>'+del+'</div>'+
+            const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'experience\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteExperience('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
+            return '<div class="exp"><div class="card-head"><div class="exp-role">'+escapeHtml(e.role)+' • '+escapeHtml(e.company)+'</div>'+ctrls+'</div>'+
                 '<div class="exp-period">'+escapeHtml(e.period)+'</div>'+(e.description?'<p class="exp-desc">'+escapeHtml(e.description)+'</p>':"")+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
         const edu=document.getElementById("cv-education");
         edu.innerHTML=cv.education.length?cv.education.map(function(e,i){
-            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteEducation('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
-            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.degree)+'</div><div class="exp-period">'+escapeHtml(e.school)+' • '+escapeHtml(e.period)+'</div></div>'+del+'</div>';
+            const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'education\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteEducation('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.degree)+'</div><div class="exp-period">'+escapeHtml(e.school)+' • '+escapeHtml(e.period)+'</div></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
         const sk=document.getElementById("cv-skills");
         sk.innerHTML=cv.skills.length?cv.skills.map(function(s,i){
@@ -704,42 +721,75 @@
 
         const cf=document.getElementById("cv-certifications");
         if(cf) cf.innerHTML=(cv.certifications&&cv.certifications.length)?cv.certifications.map(function(e,i){
-            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteCertification('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
-            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.name)+'</div><div class="exp-period">'+escapeHtml([e.issuer,e.date].filter(Boolean).join(" • "))+'</div></div>'+del+'</div>';
+            const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'certifications\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteCertification('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.name)+'</div><div class="exp-period">'+escapeHtml([e.issuer,e.date].filter(Boolean).join(" • "))+'</div></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
 
         const rc=document.getElementById("cv-recommendations");
         if(rc) rc.innerHTML=(cv.recommendations&&cv.recommendations.length)?cv.recommendations.map(function(e,i){
-            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteRecommendation('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'recommendations\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteRecommendation('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
             const link=e.link?' <a href="'+escapeHtml(e.link)+'" target="_blank" rel="noopener">View →</a>':"";
-            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.title)+'</div><div class="exp-period">'+escapeHtml(e.detail||"")+link+'</div></div>'+del+'</div>';
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.title)+'</div><div class="exp-period">'+escapeHtml(e.detail||"")+link+'</div></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
 
         const lg=document.getElementById("cv-languages");
         if(lg) lg.innerHTML=(cv.languages&&cv.languages.length)?cv.languages.map(function(e,i){
-            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteLanguage('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
-            return '<div class="card-head"><div class="exp-role">'+escapeHtml(e.name)+' <span class="exp-period" style="font-weight:400">— '+escapeHtml(e.level||"")+'</span></div>'+del+'</div>';
+            const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'languages\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteLanguage('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
+            return '<div class="card-head"><div class="exp-role">'+escapeHtml(e.name)+' <span class="exp-period" style="font-weight:400">— '+escapeHtml(e.level||"")+'</span></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
     }
     function toggleSummaryEdit(){
         if(!isOwner)return;
-        const view=document.getElementById("cv-summary-view"),input=document.getElementById("cv-summary-input"),btn=document.getElementById("cv-summary-btn");
-        if(input.classList.contains("hidden")){ input.value=cv.summary; input.classList.remove("hidden"); view.classList.add("hidden"); btn.textContent="Save"; }
-        else { cv.summary=input.value.trim(); input.classList.add("hidden"); view.classList.remove("hidden"); btn.textContent="Edit"; saveDoc("public","cv",cv); renderCv(); }
+        const view=document.getElementById("cv-summary-view"),input=document.getElementById("cv-summary-input"),tag=document.getElementById("cv-tagline-input"),btn=document.getElementById("cv-summary-btn");
+        if(input.classList.contains("hidden")){
+            input.value=cv.summary; input.classList.remove("hidden");
+            tag.value=cv.tagline||"Economist · Researcher & Data Analyst"; tag.classList.remove("hidden");
+            view.classList.add("hidden"); btn.textContent="Save";
+        } else {
+            cv.summary=input.value.trim(); cv.tagline=tag.value.trim();
+            input.classList.add("hidden"); tag.classList.add("hidden");
+            view.classList.remove("hidden"); btn.textContent="Edit";
+            saveDoc("public","cv",cv); renderCv();
+        }
     }
-    function addExperience(){ if(!isOwner)return; const role=prompt("Role / job title:"); if(role===null)return;
-        cv.experience.push({role:role,company:prompt("Company / organisation:")||"",period:prompt("Period (e.g. 2024 – Present):")||"",description:prompt("Short description (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    const ENTRY_FIELDS = {
+        experience:{label:"Experience", fields:[["role","Role / job title"],["company","Company / organisation"],["period","Period (e.g. 2024 – Present)"],["description","Short description","area"]]},
+        education:{label:"Education", fields:[["degree","Degree / qualification"],["school","School / institution"],["period","Period (e.g. 2019 – 2023)"]]},
+        certifications:{label:"Certification", fields:[["name","Certification / course name"],["issuer","Issuer"],["date","Date"]]},
+        recommendations:{label:"Recommendation", fields:[["title","Title (e.g. Organisation — Role)"],["detail","Detail (dates or project)"],["link","Link to letter (optional)"]]},
+        languages:{label:"Language", fields:[["name","Language"],["level","Level (e.g. C2, A2, Mother tongue)"]]}
+    };
+    let entrySection=null, entryIndex=null;
+    function openEntryModal(section, index){
+        if(!isOwner) return;
+        const cfg=ENTRY_FIELDS[section]; if(!cfg) return;
+        entrySection=section; entryIndex=(typeof index==="number")?index:null;
+        document.getElementById("entry-modal-title").textContent=(entryIndex!==null?"Edit ":"Add ")+cfg.label;
+        const item=(entryIndex!==null && cv[section] && cv[section][entryIndex])?cv[section][entryIndex]:{};
+        document.getElementById("entry-fields").innerHTML=cfg.fields.map(function(f){
+            const key=f[0], ph=f[1], type=f[2], val=escapeHtml(item[key]||"");
+            if(type==="area") return '<textarea id="entry-'+key+'" class="inp" placeholder="'+ph+'" style="margin-bottom:12px">'+val+'</textarea>';
+            return '<input id="entry-'+key+'" class="inp" placeholder="'+ph+'" value="'+val+'" style="margin-bottom:12px">';
+        }).join("");
+        document.getElementById("entry-modal").classList.remove("hidden");
+    }
+    function hideEntryModal(){ document.getElementById("entry-modal").classList.add("hidden"); entrySection=null; entryIndex=null; }
+    function saveEntry(){
+        if(!isOwner || !entrySection) return;
+        const cfg=ENTRY_FIELDS[entrySection]; const obj={}; let hasValue=false;
+        cfg.fields.forEach(function(f){ const el=document.getElementById("entry-"+f[0]); const v=el?el.value.trim():""; obj[f[0]]=v; if(v) hasValue=true; });
+        if(!hasValue){ hideEntryModal(); return; }
+        cv[entrySection]=cv[entrySection]||[];
+        if(entryIndex!==null && cv[entrySection][entryIndex]) cv[entrySection][entryIndex]=obj;
+        else cv[entrySection].push(obj);
+        saveDoc("public","cv",cv); renderCv(); hideEntryModal();
+    }
     function deleteExperience(i){ if(isOwner&&confirm("Delete this entry?")){cv.experience.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
-    function addEducation(){ if(!isOwner)return; const degree=prompt("Degree / qualification:"); if(degree===null)return;
-        cv.education.push({degree:degree,school:prompt("School / institution:")||"",period:prompt("Period (e.g. 2019 – 2023):")||""}); saveDoc("public","cv",cv); renderCv(); }
     function deleteEducation(i){ if(isOwner&&confirm("Delete this entry?")){cv.education.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
     function addSkill(){ if(!isOwner)return; const input=document.getElementById("skill-input"); const s=input.value.trim(); if(!s)return; cv.skills.push(s); saveDoc("public","cv",cv); renderCv(); input.value=""; input.focus(); }
     function deleteSkill(i){ if(isOwner){cv.skills.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
-    function addCertification(){ if(!isOwner)return; const name=prompt("Certification / course name:"); if(name===null)return; (cv.certifications=cv.certifications||[]).push({name:name,issuer:prompt("Issuer (optional):")||"",date:prompt("Date (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
     function deleteCertification(i){ if(isOwner&&confirm("Delete this entry?")){cv.certifications.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
-    function addRecommendation(){ if(!isOwner)return; const title=prompt("Title (e.g. Organisation — Role):"); if(title===null)return; (cv.recommendations=cv.recommendations||[]).push({title:title,detail:prompt("Detail (e.g. dates or project, optional):")||"",link:prompt("Link to letter (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
     function deleteRecommendation(i){ if(isOwner&&confirm("Delete this entry?")){cv.recommendations.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
-    function addLanguage(){ if(!isOwner)return; const name=prompt("Language:"); if(name===null)return; (cv.languages=cv.languages||[]).push({name:name,level:prompt("Level (e.g. C2, A2, Mother tongue):")||""}); saveDoc("public","cv",cv); renderCv(); }
     function deleteLanguage(i){ if(isOwner&&confirm("Delete this entry?")){cv.languages.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
     function importCv(){
         if(!isOwner) return;
@@ -749,6 +799,7 @@
         if(!data || typeof data!=="object" || Array.isArray(data)){ alert("Expected a profile object."); return; }
         cv={
             summary:data.summary||"",
+            tagline:data.tagline||cv.tagline||"",
             experience:data.experience||[],
             education:data.education||[],
             skills:data.skills||[],
