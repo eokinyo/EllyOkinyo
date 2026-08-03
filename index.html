@@ -3,12 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Analytics (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SR3V58QDH7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-SR3V58QDH7');
+</script>
 <title>Elly Okinyo</title>
 
 <meta property="og:title" content="Elly Okinyo — Personal Hub">
 <meta property="og:description" content="Portfolio, CV, blog and projects.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>">
+<link rel="icon" href="elly.jpg" type="image/jpeg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +113,14 @@
     .cal-task.p-high{border-left-color:var(--red-bright)} .cal-task.p-medium{border-left-color:var(--yellow)} .cal-task.p-low{border-left-color:var(--muted)}
     .cal-task.done{opacity:.5;text-decoration:line-through}
     .cal-empty{color:var(--muted);font-size:12px}
+    .home-hero{text-align:center;max-width:640px;margin:20px auto;padding:10px 0}
+    .home-avatar{width:132px;height:132px;margin:0 auto 20px}
+    .home-name{font-size:40px;font-weight:800;color:var(--cream);margin:0;letter-spacing:.01em}
+    .home-role{color:var(--orange);font-size:16px;margin-top:6px}
+    .home-role span{color:var(--text)}
+    .home-intro{margin:22px auto 0;line-height:1.75;max-width:600px}
+    .home-cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
+    @media(max-width:767px){ .brand{display:none} nav{padding-top:12px} }
 
     .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .card-ctrls{display:flex;gap:8px;flex-shrink:0}
@@ -171,7 +188,7 @@
         <div id="sidebar">
             <div class="brand">
                 <h1>Elly Okinyo</h1>
-                <div class="role">Software Developer <span>/ Front End</span></div>
+                <div class="role">Economist <span>· Researcher &amp; Data Analyst</span></div>
                 <div class="avatar-wrap">
                     <i class="fa-solid fa-user"></i>
                     <img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()">
@@ -185,6 +202,22 @@
         </div>
 
         <main>
+            <!-- 6: Home (landing) -->
+            <section id="content-6" class="tab-content active wrap">
+                <div class="home-hero">
+                    <div class="avatar-wrap home-avatar"><i class="fa-solid fa-user"></i><img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()"></div>
+                    <h1 class="home-name">Elly Okinyo</h1>
+                    <div class="home-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
+                    <p id="home-summary" class="home-intro"></p>
+                    <div class="home-cta">
+                        <button class="btn btn-accent" onclick="switchTab(1)">View portfolio</button>
+                        <button class="btn" onclick="switchTab(2)">Profile</button>
+                        <button class="btn" onclick="goBlog()">Blog</button>
+                        <button class="btn" onclick="switchTab(4)">Get in touch</button>
+                    </div>
+                </div>
+            </section>
+
             <!-- 0: Daily Tasks (owner) -->
             <section id="content-0" class="tab-content wrap">
                 <h2 class="title">Today's <span class="g">Tasks</span></h2>
@@ -203,7 +236,7 @@
             </section>
 
             <!-- 1: Portfolio -->
-            <section id="content-1" class="tab-content active wrap-wide">
+            <section id="content-1" class="tab-content wrap-wide">
                 <div class="head-row">
                     <h2 class="title" style="margin:0"><span class="g">Portfolio</span></h2>
                     <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
@@ -218,7 +251,7 @@
             <!-- 2: CV / Profile -->
             <section id="content-2" class="tab-content wrap">
                 <div class="head-row">
-                    <h2 class="title" style="margin:0">CV <span class="g">/ Profile</span></h2>
+                    <h2 class="title" style="margin:0"><span class="g">Profile</span></h2>
                     <button onclick="window.print()" class="no-print btn"><i class="fa-solid fa-download"></i> Export PDF</button>
                 </div>
                 <div class="card mb">
@@ -243,7 +276,7 @@
                     </div>
                     <div id="cv-education" class="stack"></div>
                 </div>
-                <div class="card">
+                <div class="card mb">
                     <h3 class="sub">Skills</h3>
                     <div id="cv-skills" style="display:flex;flex-wrap:wrap;gap:8px"></div>
                     <div class="owner-only no-print" style="margin-top:16px;display:flex;gap:10px">
@@ -251,6 +284,33 @@
                         <button onclick="addSkill()" class="btn">Add</button>
                     </div>
                 </div>
+                <div class="card mb">
+                    <div class="head-row" style="margin-bottom:14px">
+                        <h3 class="sub" style="margin:0">Certifications</h3>
+                        <button onclick="addCertification()" class="owner-only no-print btn btn-accent">+ Add</button>
+                    </div>
+                    <div id="cv-certifications" class="stack"></div>
+                </div>
+                <div class="card mb">
+                    <div class="head-row" style="margin-bottom:14px">
+                        <h3 class="sub" style="margin:0">Recommendations</h3>
+                        <button onclick="addRecommendation()" class="owner-only no-print btn btn-accent">+ Add</button>
+                    </div>
+                    <div id="cv-recommendations" class="stack"></div>
+                </div>
+                <div class="card">
+                    <div class="head-row" style="margin-bottom:14px">
+                        <h3 class="sub" style="margin:0">Languages</h3>
+                        <button onclick="addLanguage()" class="owner-only no-print btn btn-accent">+ Add</button>
+                    </div>
+                    <div id="cv-languages" class="stack"></div>
+                </div>
+
+                <details class="owner-only no-print" style="margin-top:20px">
+                    <summary style="cursor:pointer;color:var(--muted);font-size:13px">Import / restore profile (paste JSON)</summary>
+                    <textarea id="import-json" class="inp" style="margin-top:10px;min-height:130px;font-size:12px" placeholder="Paste the profile JSON here, then press Load"></textarea>
+                    <button onclick="importCv()" class="btn btn-accent" style="margin-top:10px">Load</button>
+                </details>
             </section>
 
             <!-- 3: Blog -->
@@ -410,16 +470,17 @@
         if(isOwner){ tasks = await loadDoc("private","tasks",[{id:Date.now(),text:"Welcome back — add a task",dueDate:todayStr(),priority:"medium",completed:false}]); }
         else tasks=[];
         renderTasks(); renderCalendar();
-        if(firstAuth){ firstAuth=false; if(location.hash.indexOf("#post/")!==0) switchTab(isOwner?0:1); }
-        else { const a=document.querySelector(".tab-content.active"); if(a && a.id==="content-0" && !isOwner) switchTab(1); }
+        if(firstAuth){ firstAuth=false; if(location.hash.indexOf("#post/")!==0) switchTab(isOwner?0:6); }
+        else { const a=document.querySelector(".tab-content.active"); if(a && a.id==="content-0" && !isOwner) switchTab(6); }
     }
 
     /* ---- nav / routing ---- */
     function renderNav(){
         const nav=document.getElementById("nav-container"); let h="";
+        h+=navBtn(6,"fa-house","Home","switchTab(6)");
         if(isOwner){ h+=navBtn(0,"fa-list-check","Today's Tasks","switchTab(0)"); h+=navBtn(5,"fa-calendar-days","Calendar","switchTab(5)"); }
         h+=navBtn(1,"fa-briefcase","Portfolio","switchTab(1)");
-        h+=navBtn(2,"fa-user","CV / Profile","switchTab(2)");
+        h+=navBtn(2,"fa-user","Profile","switchTab(2)");
         h+=navBtn(3,"fa-pen-nib","Blog","goBlog()");
         h+=navBtn(4,"fa-envelope","Contact","switchTab(4)");
         nav.innerHTML=h;
@@ -591,6 +652,7 @@
     let cv={summary:"",experience:[],education:[],skills:[]};
     function renderCv(){
         document.getElementById("cv-summary-view").textContent=cv.summary||"No summary yet.";
+        const hs=document.getElementById("home-summary"); if(hs) hs.textContent=cv.summary||"";
         const exp=document.getElementById("cv-experience");
         exp.innerHTML=cv.experience.length?cv.experience.map(function(e,i){
             const del=isOwner?'<button class="icon-btn no-print" onclick="deleteExperience('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
@@ -607,6 +669,25 @@
             const del=isOwner?'<button onclick="deleteSkill('+i+')">&times;</button>':"";
             return '<span class="tag">'+escapeHtml(s)+del+'</span>';
         }).join(""):'<p class="empty" style="text-align:left">No skills added yet.</p>';
+
+        const cf=document.getElementById("cv-certifications");
+        if(cf) cf.innerHTML=(cv.certifications&&cv.certifications.length)?cv.certifications.map(function(e,i){
+            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteCertification('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.name)+'</div><div class="exp-period">'+escapeHtml([e.issuer,e.date].filter(Boolean).join(" • "))+'</div></div>'+del+'</div>';
+        }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
+
+        const rc=document.getElementById("cv-recommendations");
+        if(rc) rc.innerHTML=(cv.recommendations&&cv.recommendations.length)?cv.recommendations.map(function(e,i){
+            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteRecommendation('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            const link=e.link?' <a href="'+escapeHtml(e.link)+'" target="_blank" rel="noopener">View →</a>':"";
+            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.title)+'</div><div class="exp-period">'+escapeHtml(e.detail||"")+link+'</div></div>'+del+'</div>';
+        }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
+
+        const lg=document.getElementById("cv-languages");
+        if(lg) lg.innerHTML=(cv.languages&&cv.languages.length)?cv.languages.map(function(e,i){
+            const del=isOwner?'<button class="icon-btn no-print" onclick="deleteLanguage('+i+')"><i class="fa-solid fa-trash-can"></i></button>':"";
+            return '<div class="card-head"><div class="exp-role">'+escapeHtml(e.name)+' <span class="exp-period" style="font-weight:400">— '+escapeHtml(e.level||"")+'</span></div>'+del+'</div>';
+        }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
     }
     function toggleSummaryEdit(){
         if(!isOwner)return;
@@ -622,6 +703,32 @@
     function deleteEducation(i){ if(isOwner&&confirm("Delete this entry?")){cv.education.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
     function addSkill(){ if(!isOwner)return; const input=document.getElementById("skill-input"); const s=input.value.trim(); if(!s)return; cv.skills.push(s); saveDoc("public","cv",cv); renderCv(); input.value=""; input.focus(); }
     function deleteSkill(i){ if(isOwner){cv.skills.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function addCertification(){ if(!isOwner)return; const name=prompt("Certification / course name:"); if(name===null)return; (cv.certifications=cv.certifications||[]).push({name:name,issuer:prompt("Issuer (optional):")||"",date:prompt("Date (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    function deleteCertification(i){ if(isOwner&&confirm("Delete this entry?")){cv.certifications.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function addRecommendation(){ if(!isOwner)return; const title=prompt("Title (e.g. Organisation — Role):"); if(title===null)return; (cv.recommendations=cv.recommendations||[]).push({title:title,detail:prompt("Detail (e.g. dates or project, optional):")||"",link:prompt("Link to letter (optional):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    function deleteRecommendation(i){ if(isOwner&&confirm("Delete this entry?")){cv.recommendations.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function addLanguage(){ if(!isOwner)return; const name=prompt("Language:"); if(name===null)return; (cv.languages=cv.languages||[]).push({name:name,level:prompt("Level (e.g. C2, A2, Mother tongue):")||""}); saveDoc("public","cv",cv); renderCv(); }
+    function deleteLanguage(i){ if(isOwner&&confirm("Delete this entry?")){cv.languages.splice(i,1);saveDoc("public","cv",cv);renderCv();} }
+    function importCv(){
+        if(!isOwner) return;
+        const ta=document.getElementById("import-json");
+        let data;
+        try { data=JSON.parse(ta.value); } catch(e){ alert("That isn't valid JSON — copy the whole block exactly as given."); return; }
+        if(!data || typeof data!=="object" || Array.isArray(data)){ alert("Expected a profile object."); return; }
+        cv={
+            summary:data.summary||"",
+            experience:data.experience||[],
+            education:data.education||[],
+            skills:data.skills||[],
+            certifications:data.certifications||[],
+            recommendations:data.recommendations||[],
+            languages:data.languages||[]
+        };
+        saveDoc("public","cv",cv);
+        renderCv();
+        ta.value="";
+        alert("Profile loaded ✓");
+    }
 
     /* ---- blog (public) ---- */
     let blog=[], editingSlug=null;
@@ -697,7 +804,7 @@
     async function loadPublic(){
         portfolio = await loadDoc("public","portfolio",[{title:"Personal Hub",desc:"This site — tasks, portfolio, CV and blog, with a private login.",link:"",status:"Live"}]);
         renderPortfolio();
-        cv = await loadDoc("public","cv",{summary:"Junior developer building practical web tools. Comfortable shipping small projects end to end, and always learning.",experience:[],education:[],skills:[]});
+        cv = await loadDoc("public","cv",{summary:"",experience:[],education:[],skills:[],certifications:[],recommendations:[],languages:[]});
         renderCv();
         blog = await loadDoc("public","blog",[{id:1,slug:"welcome",title:"Welcome to my blog",body:"# Hello 👋\n\nThis is my first post. I'll write here about what I'm building and learning.\n\n- Built with vanilla JS + Firebase\n- Hosted on Firebase Hosting\n\nMore soon.",date:new Date().toISOString().slice(0,10)}]);
         setStatus(firebaseReady?"cloud-ok":"local");
