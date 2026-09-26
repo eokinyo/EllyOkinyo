@@ -1,13 +1,27 @@
 {
   "hosting": {
     "public": ".",
+    "predeploy": [
+      "node scripts/check-deploy.js"
+    ],
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**",
       "theme-preview.html",
       "dev/**",
-      "scripts/**"
+      "scripts/**",
+      "firestore.rules",
+      "firestore.indexes.json",
+      "**/*.md",
+      "package.json",
+      "package-lock.json",
+      "npm-shrinkwrap.json",
+      "yarn.lock",
+      "pnpm-lock.yaml",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "**/*.log"
     ],
     "rewrites": [
       {
