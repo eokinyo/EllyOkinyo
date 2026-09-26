@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* Local preview only. Serves the repo and falls back to index.html for
    extension-less paths, the way Firebase Hosting rewrites do.
-   Open http://127.0.0.1:4173/?mock=1
+   Open http://127.0.0.1:4173/
+   Localhost never loads config.js or initialises Firebase.
    Not deployed (scripts/ is in hosting.ignore). */
 const http = require("http");
 const fs = require("fs");
