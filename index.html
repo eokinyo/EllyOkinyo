@@ -12,12 +12,35 @@
   gtag('js', new Date());
   gtag('config', 'G-SR3V58QDH7');
 </script>
-<title>Elly Okinyo</title>
-
-<meta property="og:title" content="Elly Okinyo — Personal Hub">
-<meta property="og:description" content="Portfolio, CV, blog and projects.">
+<title>Elly Okinyo — Economist & Data Analyst, Helsinki</title>
+<meta name="description" content="Economist and data analyst in Helsinki working on time series, labour markets and remittances. Research Master's in Economics, University of Helsinki.">
+<link rel="canonical" href="https://ellyokinyo.com/">
+<meta property="og:title" content="Elly Okinyo — Economist & Data Analyst, Helsinki">
+<meta property="og:description" content="Economist and data analyst in Helsinki working on time series, labour markets and remittances.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://ellyokinyo.com/">
+<meta property="og:image" content="https://ellyokinyo.com/og-image.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Elly Okinyo — Economist & Data Analyst, Helsinki">
+<meta name="twitter:description" content="Economist and data analyst in Helsinki working on time series, labour markets and remittances.">
+<meta name="twitter:image" content="https://ellyokinyo.com/og-image.jpg">
 <link rel="icon" href="elly.jpg" type="image/jpeg">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Elly Okinyo",
+  "jobTitle": "Economist",
+  "url": "https://ellyokinyo.com/",
+  "address": { "@type": "PostalAddress", "addressLocality": "Helsinki" },
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "University of Helsinki" },
+  "sameAs": [
+    "https://github.com/eokinyo",
+    "https://www.linkedin.com/in/elly-okinyo/"
+  ]
+}
+</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,11 +53,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 <!-- Markdown renderer for the blog -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-<script src="config.js"></script>
 
 <style>
     :root{
-        --bg:#1d2021; --bg-soft:#282828; --text:#a89984; --muted:#7c6f64;
+        --bg:#1d2021; --bg-soft:#282828; --text:#a89984; --muted:#948676;
         --cream:#fbf1c7; --olive:#b8bb26; --orange:#fe8019; --yellow:#fabd2f;
         --red:#cc241d; --red-bright:#fb4934; --line:rgba(204,36,29,.55);
     }
@@ -55,10 +77,12 @@
         background:#3c3836;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
     .avatar-wrap i{color:var(--muted);font-size:42px}
     .avatar-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    nav{padding:8px 12px;display:flex;gap:6px;overflow-x:auto}
-    @media(min-width:768px){nav{flex-direction:column;flex:1}}
+    nav{padding:8px 10px 12px;display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto}
+    @media(min-width:768px){nav{flex-direction:column;flex-wrap:nowrap;flex:1;overflow-x:visible}}
     .nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;border:1px solid transparent;
-        background:none;color:var(--text);font-family:inherit;font-size:15px;cursor:pointer;white-space:nowrap;text-align:left}
+        background:none;color:var(--text);font-family:inherit;font-size:15px;cursor:pointer;white-space:nowrap;text-align:left;
+        transition:border-color 150ms ease}
+    @media(max-width:767px){nav{padding-top:12px} .nav-item{padding:7px 10px;font-size:13.5px;gap:6px}}
     .nav-item:hover{color:var(--cream)} .nav-item.active{border-color:var(--line);color:var(--cream)}
     .side-foot{padding:14px 18px;border-top:1px solid var(--line);font-size:12px}
     .side-foot a,.side-foot button{color:var(--olive);background:none;border:none;font-family:inherit;font-size:12px;cursor:pointer;padding:0}
@@ -72,7 +96,7 @@
     h2.title{font-size:30px;font-weight:800;color:var(--cream);margin:0 0 22px;letter-spacing:.01em}
     h3.sub{font-size:19px;font-weight:700;color:var(--cream);margin:0 0 14px}
 
-    .card{border:1px solid var(--line);border-radius:18px;padding:20px;background:transparent}
+    .card{border:1px solid var(--line);border-radius:18px;padding:20px;background:transparent;transition:border-color 150ms ease}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
     @media(max-width:700px){.grid2{grid-template-columns:1fr}}
     .head-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:22px;flex-wrap:wrap}
@@ -118,9 +142,21 @@
     .home-name{font-size:40px;font-weight:800;color:var(--cream);margin:0;letter-spacing:.01em}
     .home-role{color:var(--orange);font-size:16px;margin-top:6px}
     .home-role span{color:var(--text)}
-    .home-intro{margin:22px auto 0;line-height:1.75;max-width:600px}
+    .home-intro{margin:22px auto 0;line-height:1.75;max-width:640px}
+    #cv-summary-view{white-space:pre-wrap}
+    .home-blocks{margin-top:36px;text-align:left}
+    .work-list{margin:0;padding-left:1.15em}
+    .work-list li{margin:0 0 12px}
+    .work-list li:last-child{margin-bottom:0}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
+    .badge-notes{color:var(--yellow);border-color:rgba(250,189,47,.5);background:rgba(250,189,47,.12)}
+    .draft-note{margin:-6px 0 18px;color:var(--muted);font-size:13px}
+    .contact-email{color:var(--cream)}
+    #latest-writing{margin-top:32px}
+    .preview-banner{background:var(--bg-soft);color:var(--muted);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
+    body:not([data-ready]) .owner-only{display:none!important}
     .home-cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
-    @media(max-width:767px){ .brand{display:none} nav{padding-top:12px} }
+    @media(max-width:767px){ .brand{display:none} }
 
     .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
     .card-ctrls{display:flex;gap:8px;flex-shrink:0}
@@ -193,11 +229,11 @@
                 <div class="role" id="sidebar-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
                 <div class="avatar-wrap">
                     <i class="fa-solid fa-user"></i>
-                    <img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()">
+                    <img src="/elly.jpg" alt="Portrait of Elly Okinyo" onerror="this.remove()">
                 </div>
             </div>
             <nav id="nav-container"></nav>
-            <div class="side-foot">
+            <div class="side-foot hidden">
                 <div id="auth-box"></div>
                 <div id="sync-status"></div>
             </div>
@@ -207,16 +243,33 @@
             <!-- 6: Home (landing) -->
             <section id="content-6" class="tab-content active wrap">
                 <div class="home-hero">
-                    <div class="avatar-wrap home-avatar"><i class="fa-solid fa-user"></i><img src="elly.jpg" alt="Elly Okinyo" onerror="this.remove()"></div>
+                    <div class="avatar-wrap home-avatar"><i class="fa-solid fa-user"></i><img src="/elly.jpg" alt="Portrait of Elly Okinyo" onerror="this.remove()"></div>
                     <h1 class="home-name">Elly Okinyo</h1>
                     <div class="home-role" id="home-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
-                    <p id="home-summary" class="home-intro"></p>
+                    <p class="home-intro">I'm an economist based in Helsinki. I work with time series, labour-market and remittance data, and I care about getting the method right and then explaining it plainly. I hold a Research Master's in Economics from the University of Helsinki, where my thesis tested whether Google Trends improves Bitcoin volatility forecasts.</p>
                     <div class="home-cta">
-                        <button class="btn btn-accent" onclick="switchTab(1)">View portfolio</button>
-                        <button class="btn" onclick="switchTab(2)">Profile</button>
-                        <button class="btn" onclick="goBlog()">Blog</button>
+                        <button class="btn" onclick="goWriting()">Writing</button>
+                        <button class="btn btn-accent" onclick="switchTab(1)">Research &amp; Projects</button>
+                        <button class="btn" onclick="switchTab(2)">CV</button>
                         <button class="btn" onclick="switchTab(4)">Get in touch</button>
                     </div>
+                </div>
+                <div class="home-blocks">
+                    <div class="grid2">
+                        <div class="card">
+                            <h3 class="sub">How I work</h3>
+                            <ul class="work-list">
+                                <li><strong class="cream">Method first.</strong> I choose the model to fit the question and the data, benchmark it against something simple, and report when the fancy option doesn't win.</li>
+                                <li><strong class="cream">Reproducible by default.</strong> Code, data steps and outputs live in version control so anyone can rerun every table, as with my thesis repo.</li>
+                                <li><strong class="cream">Plain-language results.</strong> I write up what the numbers mean for a decision, with the uncertainty stated, not just the coefficients.</li>
+                            </ul>
+                        </div>
+                        <div class="card">
+                            <h3 class="sub">Research interests</h3>
+                            <p style="margin:0">Labour markets, especially how downturns hit different groups. In Finland, unemployment among people of foreign background aged 20–64 was 16.7% in 2024, against 6.6% for people of Finnish background (<a href="https://stat.fi/en/publication/cm6uhzyb4edzf07uqd79p16ku">Statistics Finland</a>). Remittances and household finance, with a focus on Kenya's diaspora inflows and what drives them. Time-series econometrics and forecasting: volatility models, forecast evaluation, and when machine learning helps and when it doesn't.</p>
+                        </div>
+                    </div>
+                    <div id="latest-writing" class="card no-print" style="display:none"></div>
                 </div>
             </section>
 
@@ -240,7 +293,7 @@
             <!-- 1: Portfolio -->
             <section id="content-1" class="tab-content wrap-wide">
                 <div class="head-row">
-                    <h2 class="title" style="margin:0"><span class="g">Portfolio</span></h2>
+                    <h2 class="title" style="margin:0"><span class="g">Research</span> &amp; Projects</h2>
                     <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
                         <span id="import-status" style="font-size:12px;color:var(--muted)"></span>
                         <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import</button>
@@ -249,6 +302,7 @@
                         <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New</button>
                     </div>
                 </div>
+                <p class="owner-only draft-note">Draft list (not public)</p>
                 <div id="portfolio-bulk"></div>
                 <div id="portfolio-grid" class="grid2"></div>
             </section>
@@ -256,15 +310,13 @@
             <!-- 2: CV / Profile -->
             <section id="content-2" class="tab-content wrap">
                 <div class="head-row">
-                    <h2 class="title" style="margin:0"><span class="g">Profile</span></h2>
+                    <h2 class="title" style="margin:0"><span class="g">CV</span></h2>
                     <button onclick="window.print()" class="no-print btn"><i class="fa-solid fa-download"></i> Export PDF</button>
                 </div>
                 <div class="card mb">
                     <h3 class="sub">Professional Summary</h3>
                     <p id="cv-summary-view"></p>
-                    <div class="owner-only" style="margin-top:14px">
-                        <input id="cv-tagline-input" class="inp hidden" placeholder="Tagline (e.g. Economist · Data Analyst)" style="margin-bottom:10px">
-                        <textarea id="cv-summary-input" class="inp hidden"></textarea>
+                    <div class="owner-only" id="cv-summary-edit" style="margin-top:14px">
                         <button onclick="toggleSummaryEdit()" id="cv-summary-btn" class="btn">Edit</button>
                     </div>
                 </div>
@@ -323,8 +375,13 @@
             <section id="content-3" class="tab-content wrap-wide">
                 <div id="blog-list">
                     <div class="head-row">
-                        <h2 class="title" style="margin:0"><span class="g">Blog</span></h2>
+                        <h2 class="title" style="margin:0"><span class="g">Writing</span></h2>
                         <button onclick="newPost()" class="owner-only btn"><i class="fa-solid fa-plus"></i> New Post</button>
+                    </div>
+                    <div class="chips no-print" id="blog-chips">
+                        <button type="button" class="nav-item active" data-filter="all" onclick="setBlogFilter('all')">All</button>
+                        <button type="button" class="nav-item" data-filter="economics" onclick="setBlogFilter('economics')">Economics</button>
+                        <button type="button" class="nav-item" data-filter="notes" onclick="setBlogFilter('notes')">Notes from Helsinki</button>
                     </div>
                     <div id="blog-grid" class="grid2"></div>
                 </div>
@@ -338,7 +395,7 @@
             <section id="content-4" class="tab-content wrap">
                 <h2 class="title">Contact</h2>
                 <div class="card">
-                    <p style="margin-top:0">Fill this out and it'll open in your email app, addressed to me.</p>
+                    <p style="margin-top:0">Email <a class="contact-email" href="mailto:elly.okinyo@gmail.com">elly.okinyo@gmail.com</a>. You can also use the form; it opens your email app, addressed to me.</p>
                     <div class="grid2" style="gap:14px">
                         <input id="c-first" class="inp" placeholder="First name">
                         <input id="c-last" class="inp" placeholder="Last name">
@@ -365,8 +422,8 @@
             <footer class="site-footer no-print">
                 <div>Find me elsewhere</div>
                 <div class="socials">
-                    <a href="https://github.com/eokinyo" target="_blank" rel="noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
-                    <a href="https://www.linkedin.com/in/elly-okinyo/" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="https://github.com/eokinyo" target="_blank" rel="me noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+                    <a href="https://www.linkedin.com/in/elly-okinyo/" target="_blank" rel="me noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
                     <a href="https://x.com/e_okinyo" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
                     <a href="mailto:elly.okinyo@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
                 </div>
@@ -406,6 +463,10 @@
         <div class="modal" style="max-width:640px">
             <h3>Write post</h3>
             <input id="blog-title" class="inp" placeholder="Post title">
+            <select id="blog-category" class="inp" aria-label="Category">
+                <option value="economics">Economics</option>
+                <option value="notes">Notes from Helsinki</option>
+            </select>
             <div style="margin-bottom:8px"><button type="button" onclick="insertBlogImage()" class="btn" style="font-size:12px;padding:6px 12px"><i class="fa-solid fa-image"></i> Insert image</button></div>
             <textarea id="blog-body" class="inp" style="min-height:280px" placeholder="Write in Markdown…"></textarea>
             <p class="md-hint"><span>Markdown:</span> <code># Heading</code> <code>**bold**</code> <code>*italic*</code> <code>[link](https://…)</code> <code>- list item</code> <code>`code`</code></p>
@@ -422,13 +483,30 @@
 
     /* ---- Firebase ---- */
     let db=null, auth=null, provider=null, firebaseReady=false;
-    try {
-        if (window.firebaseConfig && window.firebase) {
-            firebase.initializeApp(window.firebaseConfig);
-            db = firebase.firestore(); auth = firebase.auth();
-            provider = new firebase.auth.GoogleAuthProvider(); firebaseReady = true;
-        }
-    } catch (e) { console.warn("Firebase not initialized:", e.message); }
+    function isLocalPreview(){
+        const h=location.hostname;
+        return h==="localhost" || h==="127.0.0.1" || h==="::1";
+    }
+    function loadScript(src){
+        return new Promise(function(resolve, reject){
+            const s=document.createElement("script");
+            s.src=src;
+            s.onload=function(){ resolve(); };
+            s.onerror=function(){ reject(new Error("Failed to load "+src)); };
+            document.head.appendChild(s);
+        });
+    }
+    async function bootFirebase(){
+        try { await loadScript("/config.js"); }
+        catch(e){ console.warn("config.js not loaded:", e.message); return; }
+        try {
+            if (window.firebaseConfig && window.firebase) {
+                firebase.initializeApp(window.firebaseConfig);
+                db = firebase.firestore(); auth = firebase.auth();
+                provider = new firebase.auth.GoogleAuthProvider(); firebaseReady = true;
+            }
+        } catch (e) { console.warn("Firebase not initialized:", e.message); }
+    }
 
     let currentUser=null, isOwner=false, firstAuth=true;
     function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_,r){setTimeout(function(){r(new Error("timeout"));},ms);})]); }
@@ -447,18 +525,29 @@
         return fallback;
     }
     async function saveDoc(scope, name, value){
+        if(isLocalPreview()) return;
         try { localStorage.setItem(scope+":"+name, JSON.stringify(value)); } catch(e){}
         if (firebaseReady){
             try { await withTimeout(db.collection(scope).doc(name).set({value:value}), 6000); setStatus("cloud-ok"); }
             catch(e){ console.warn("Cloud save failed ("+scope+":"+name+"):", e.message); setStatus("cloud-fail"); }
         }
     }
+    function updateSideFoot(){
+        const foot=document.querySelector(".side-foot");
+        const authBox=document.getElementById("auth-box");
+        const sync=document.getElementById("sync-status");
+        if(!foot) return;
+        const empty=!(authBox && authBox.textContent.trim()) && !(sync && sync.textContent.trim());
+        foot.classList.toggle("hidden", empty);
+    }
     function setStatus(s){
         const el=document.getElementById("sync-status"); if(!el) return;
+        if(!isOwner){ el.textContent=""; updateSideFoot(); return; }
         if(!firebaseReady) el.textContent="💾 saved on this device";
         else if(s==="cloud-ok") el.textContent="☁ cloud sync on";
         else if(s==="cloud-fail") el.textContent="⚠ cloud save failed — saved locally";
         else el.textContent="☁ connecting…";
+        updateSideFoot();
     }
     function escapeHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); }
     function mdToHtml(md){ try { if(window.marked) return marked.parse(String(md||""), {breaks:true}); } catch(e){} return "<pre>"+escapeHtml(md)+"</pre>"; }
@@ -466,14 +555,18 @@
     /* ---- auth ---- */
     function signIn(){ if(!auth){alert("Sign-in unavailable: Firebase isn't configured yet.");return;} auth.signInWithPopup(provider).catch(function(e){alert("Sign-in failed: "+e.message);}); }
     function signOut(){ if(auth) auth.signOut(); }
+    function wantsAdmin(){
+        return new URLSearchParams(location.search).has("admin") || location.hash==="#admin";
+    }
     function renderAuthUI(){
         const box=document.getElementById("auth-box");
-        if(!firebaseReady) box.textContent="local mode (sign-in unavailable)";
-        else if(currentUser) box.innerHTML='<div style="color:var(--text)">'+escapeHtml(currentUser.email||"signed in")+'</div><button onclick="signOut()">sign out</button>';
-        else box.innerHTML='<button onclick="signIn()"><i class="fa-brands fa-google"></i> sign in</button>';
+        if(currentUser) box.innerHTML='<div style="color:var(--text)">'+escapeHtml(currentUser.email||"signed in")+'</div><button onclick="signOut()">sign out</button>';
+        else if(wantsAdmin()) box.innerHTML='<button onclick="signIn()"><i class="fa-brands fa-google"></i> sign in</button>';
+        else box.textContent="";
         const banner=document.getElementById("owner-banner");
         if(currentUser && !isOwner){ document.getElementById("uid-value").textContent=currentUser.uid; banner.classList.remove("hidden"); }
         else banner.classList.add("hidden");
+        updateSideFoot();
     }
     function handleAuth(user){
         currentUser=user; isOwner=!!(user && user.uid===OWNER_UID);
@@ -483,13 +576,21 @@
         if(active && active.id==="content-3") renderBlogView();
         refreshPrivate();
         route();
+        setStatus("cloud-ok");
+    }
+    function hashIsSection(){
+        const h=location.hash;
+        return h.indexOf("#post/")===0 || h==="#home" || h==="#writing" || h.indexOf("#writing/")===0 || h==="#research" || h==="#cv" || h==="#contact";
     }
     async function refreshPrivate(){
-        if(isOwner){ tasks = await loadDoc("private","tasks",[{id:Date.now(),text:"Welcome back — add a task",dueDate:todayStr(),priority:"medium",completed:false}]); }
-        else tasks=[];
+        if(isOwner && !isLocalPreview()){ tasks = await loadDoc("private","tasks",[{id:Date.now(),text:"Welcome back — add a task",dueDate:todayStr(),priority:"medium",completed:false}]); }
+        else if(!isOwner) tasks=[];
         renderTasks(); renderCalendar();
-        if(firstAuth){ firstAuth=false; if(location.hash.indexOf("#post/")!==0) switchTab(isOwner?0:6); }
-        else { const a=document.querySelector(".tab-content.active"); if(a && a.id==="content-0" && !isOwner) switchTab(6); }
+        if(firstAuth){
+            firstAuth=false;
+            if(!hashIsSection() && location.hash!=="#admin") switchTab(isOwner?0:6, {silent:true});
+        }
+        else { const a=document.querySelector(".tab-content.active"); if(a && a.id==="content-0" && !isOwner) switchTab(6, {silent:true}); }
     }
 
     /* ---- nav / routing ---- */
@@ -497,9 +598,9 @@
         const nav=document.getElementById("nav-container"); let h="";
         h+=navBtn(6,"fa-house","Home","switchTab(6)");
         if(isOwner){ h+=navBtn(0,"fa-list-check","Today's Tasks","switchTab(0)"); h+=navBtn(5,"fa-calendar-days","Calendar","switchTab(5)"); }
-        h+=navBtn(1,"fa-briefcase","Portfolio","switchTab(1)");
-        h+=navBtn(2,"fa-user","Profile","switchTab(2)");
-        h+=navBtn(3,"fa-pen-nib","Blog","goBlog()");
+        h+=navBtn(3,"fa-pen-nib","Writing","goWriting()");
+        h+=navBtn(1,"fa-briefcase","Research &amp; Projects","switchTab(1)");
+        h+=navBtn(2,"fa-user","CV","switchTab(2)");
         h+=navBtn(4,"fa-envelope","Contact","switchTab(4)");
         nav.innerHTML=h;
         const active=document.querySelector(".tab-content.active");
@@ -508,22 +609,53 @@
     function navBtn(n,icon,label,onclick){
         return '<button onclick="'+onclick+'" id="nav-'+n+'" class="nav-item"><i class="fa-solid '+icon+'"></i><span>'+label+'</span></button>';
     }
-    function switchTab(n){
-        if(n!==BLOG_TAB && location.hash.indexOf("#post/")===0) history.replaceState(null,"",location.pathname+location.search);
+    function switchTab(n, opts){
+        opts=opts||{};
         document.querySelectorAll(".tab-content").forEach(function(el){el.classList.remove("active");});
         const c=document.getElementById("content-"+n); if(c) c.classList.add("active");
-        document.querySelectorAll(".nav-item").forEach(function(el){el.classList.remove("active");});
+        document.querySelectorAll("#nav-container .nav-item").forEach(function(el){el.classList.remove("active");});
         const nv=document.getElementById("nav-"+n); if(nv) nv.classList.add("active");
-        if(n===BLOG_TAB) renderBlogView();
+        if(n===BLOG_TAB){
+            if(location.hash.indexOf("#post/")===0 && !opts.forceList) renderBlogView();
+            else showBlogList();
+        }
         if(n===5) renderCalendar();
+        if(opts.silent) return;
+        let hash="";
+        if(n===6) hash="#home";
+        else if(n===1) hash="#research";
+        else if(n===2) hash="#cv";
+        else if(n===4) hash="#contact";
+        else if(n===BLOG_TAB){
+            if(location.hash.indexOf("#post/")===0 && !opts.forceList) hash=location.hash;
+            else hash=(blogFilter&&blogFilter!=="all")?"#writing/"+blogFilter:"#writing";
+        }
+        if(!hash) return;
+        const next=location.pathname+location.search+hash;
+        const cur=location.pathname+location.search+location.hash;
+        if(next!==cur) history.pushState({tab:n}, "", next);
     }
-    function goBlog(){ if(location.hash.indexOf("#post/")===0) history.replaceState(null,"",location.pathname+location.search); switchTab(BLOG_TAB); }
-    function route(){
-        const active=document.querySelector(".tab-content.active");
-        if(location.hash.indexOf("#post/")===0) switchTab(BLOG_TAB);
-        else if(active && active.id==="content-3") showBlogList();
+    function goWriting(){ blogFilter="all"; switchTab(BLOG_TAB, {forceList:true}); }
+    function route(ev){
+        const h=location.hash;
+        if(h==="#admin"){ renderAuthUI(); return; }
+        if(h==="" || h==="#home"){
+            if(h==="#home" || (ev && (ev.type==="popstate" || ev.type==="hashchange"))) switchTab(6, {silent:true});
+            return;
+        }
+        if(h.indexOf("#post/")===0){ switchTab(BLOG_TAB, {silent:true}); return; }
+        const m=h.match(/^#writing(?:\/(all|economics|notes))?$/);
+        if(m){
+            blogFilter=(m[1] && m[1]!=="all")?m[1]:"all";
+            switchTab(BLOG_TAB, {silent:true, forceList:true});
+            return;
+        }
+        if(h==="#research"){ switchTab(1, {silent:true}); return; }
+        if(h==="#cv"){ switchTab(2, {silent:true}); return; }
+        if(h==="#contact"){ switchTab(4, {silent:true}); return; }
     }
     window.addEventListener("hashchange", route);
+    window.addEventListener("popstate", route);
     function applyMode(){ document.querySelectorAll(".owner-only").forEach(function(el){el.style.display=isOwner?"":"none";}); }
 
     /* ---- tasks (private) ---- */
@@ -589,11 +721,29 @@
             label.textContent=start.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
     }
 
-    /* ---- portfolio (public) ---- */
+    /* ---- portfolio (public visitors see the curated list; owner edits Firestore) ---- */
+    const CURATED_PORTFOLIO = [
+        { title: "Does Google Trends Improve Bitcoin Volatility Forecasts? (MSc thesis)",
+          desc: "Master's thesis, University of Helsinki (Research Track), supervised by Prof. Mika Meitz. Compares GARCH(1,1) and IGARCH(1,1), under normal and Student-t innovations and with and without lagged Google Trends attention, against Random Forest regression on daily data from Jan 2017 to Sep 2025. Evaluated with QLIKE loss and SPA and MCS tests. No model significantly beat a Gaussian GARCH(1,1), and sentiment added little. Fully reproducible in R and Python.",
+          link: "https://github.com/eokinyo/Thesis_Work", status: "2026" },
+        { title: "CHARM project, University of Helsinki: research data work",
+          desc: "Research Trainee (Sep–Dec 2025) and Research Assistant (Feb–Apr 2026; Aug 2026 – present) on CHARM, a University of Helsinki Faculty of Theology project on Finland's oldest written culture. Analysed structured historical datasets and supported metadata standardisation; cleaned and structured high-dimensional spectral data from medieval manuscript fragments for clustering and similarity analysis; built reproducible R/Python pipelines.",
+          link: "https://www.helsinki.fi/en/projects/medieval-texts-scribes-and-craftsmanship", status: "2025–present" },
+        { title: "Pro-cyclical modelling of cancer mortalities based on macroeconomic factors",
+          desc: "Bachelor's research project (BBSc in Financial Economics, Strathmore University, 2020). A panel data analysis relating cancer mortality to macroeconomic variables across countries grouped by World Bank income level (high, upper-middle, lower-middle and low income). The panel combines country-level crude cancer mortality, GDP per capita, the share of GDP spent on health, annual cancer incidence, 5-year prevalence and disability-adjusted life years lost to cancer.",
+          link: "https://su-plus.strathmore.edu/items/566d0e12-2c02-44c1-8ffa-8402a96c8130", status: "2020" },
+        { title: "Football analytics pipeline",
+          desc: "Python pipelines that ingest FBref and Understat data for Europe's top five leagues, with xG analysis, backtesting, forecasting and automated visual reports.",
+          link: "https://github.com/eokinyo/sportsAnalytics", status: "Python" },
+        { title: "This website",
+          desc: "Personal site in vanilla JavaScript on Firebase Hosting and Firestore, with an in-browser editor for my CV and a Markdown blog.",
+          link: "https://github.com/eokinyo/EllyOkinyo", status: "Live" }
+    ];
     let portfolio=[], selectMode=false, selected=new Set();
     function renderPortfolio(){
         const grid=document.getElementById("portfolio-grid");
         const bulk=document.getElementById("portfolio-bulk");
+        const list=isOwner ? portfolio : CURATED_PORTFOLIO;
         if(bulk){
             if(isOwner && selectMode){
                 bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
@@ -602,10 +752,12 @@
                     '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
             } else bulk.innerHTML="";
         }
-        if(!portfolio.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
-        grid.innerHTML=portfolio.map(function(p,i){
-            const link=p.link?'<a href="'+escapeHtml(p.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View →</a>':'<span></span>';
+        if(!list.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
+        grid.innerHTML=list.map(function(p,i){
+            const href=String(p.link||"").trim();
+            const link=href?'<a href="'+escapeHtml(href)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View →</a>':'<span></span>';
             const status=p.status?'<span class="badge-status">'+escapeHtml(p.status)+'</span>':"";
+            const descText=(!p.desc || p.desc==="No description")?"":p.desc;
             let ctrls="", cardOpen='<div class="card">';
             if(isOwner && selectMode){
                 cardOpen='<div class="card'+(selected.has(i)?" selected":"")+'" onclick="toggleSelect('+i+')" style="cursor:pointer">';
@@ -618,7 +770,7 @@
                     '<button class="icon-btn" title="Delete" onclick="deleteProject('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>';
             }
             return cardOpen+'<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
-                '<p class="card-desc">'+escapeHtml(p.desc)+'</p><div class="card-foot">'+link+status+'</div></div>';
+                (descText?'<p class="card-desc">'+escapeHtml(descText)+'</p>':"")+'<div class="card-foot">'+link+status+'</div></div>';
         }).join("");
     }
     let editingProjectIndex=null;
@@ -698,7 +850,6 @@
     function taglineHtml(t){ const s=String(t); const idx=s.indexOf("·"); if(idx>=0){ return escapeHtml(s.slice(0,idx).trim())+' <span>· '+escapeHtml(s.slice(idx+1).trim())+'</span>'; } return escapeHtml(s); }
     function renderCv(){
         document.getElementById("cv-summary-view").textContent=cv.summary||"No summary yet.";
-        const hs=document.getElementById("home-summary"); if(hs) hs.textContent=cv.summary||"";
         const tagline=cv.tagline||"Economist · Researcher & Data Analyst";
         const hr=document.getElementById("home-role"); if(hr) hr.innerHTML=taglineHtml(tagline);
         const sr=document.getElementById("sidebar-role"); if(sr) sr.innerHTML=taglineHtml(tagline);
@@ -740,9 +891,18 @@
     }
     function toggleSummaryEdit(){
         if(!isOwner)return;
-        const view=document.getElementById("cv-summary-view"),input=document.getElementById("cv-summary-input"),tag=document.getElementById("cv-tagline-input"),btn=document.getElementById("cv-summary-btn");
+        const view=document.getElementById("cv-summary-view"), btn=document.getElementById("cv-summary-btn"), host=document.getElementById("cv-summary-edit");
+        let input=document.getElementById("cv-summary-input"), tag=document.getElementById("cv-tagline-input");
+        if(!input){
+            tag=document.createElement("input");
+            tag.id="cv-tagline-input"; tag.className="inp"; tag.type="text"; tag.setAttribute("aria-label","Tagline"); tag.style.marginBottom="10px";
+            input=document.createElement("textarea");
+            input.id="cv-summary-input"; input.className="inp"; input.setAttribute("aria-label","Professional summary");
+            host.insertBefore(tag, btn); host.insertBefore(input, btn);
+            input.classList.add("hidden"); tag.classList.add("hidden");
+        }
         if(input.classList.contains("hidden")){
-            input.value=cv.summary; input.classList.remove("hidden");
+            input.value=cv.summary||""; input.classList.remove("hidden");
             tag.value=cv.tagline||"Economist · Researcher & Data Analyst"; tag.classList.remove("hidden");
             view.classList.add("hidden"); btn.textContent="Save";
         } else {
@@ -813,8 +973,10 @@
         alert("Profile loaded ✓");
     }
 
-    /* ---- blog (public) ---- */
-    let blog=[], editingSlug=null;
+    /* ---- writing (public) ---- */
+    let blog=[], editingSlug=null, blogFilter="all";
+    function postCategory(p){ return p && p.category==="notes" ? "notes" : "economics"; }
+    function categoryLabel(c){ return c==="notes" ? "Notes from Helsinki" : "Economics"; }
     function insertBlogImage(){
         if(!isOwner) return;
         const url=prompt("Image URL (or a path in your site, e.g. img/photo.jpg):"); if(!url) return;
@@ -828,45 +990,94 @@
     function slugify(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
     function excerpt(md){ const t=String(md||"").replace(/[#*_`>\[\]()!-]/g," ").replace(/\s+/g," ").trim(); return t.length>140?t.slice(0,140)+"…":t; }
     function renderBlogView(){ const m=location.hash.match(/^#post\/(.+)$/); if(m) showBlogPost(decodeURIComponent(m[1])); else showBlogList(); }
+    function setBlogFilter(f){
+        blogFilter=(f==="notes"||f==="economics")?f:"all";
+        const hash=blogFilter==="all"?"#writing":"#writing/"+blogFilter;
+        history.replaceState({tab:BLOG_TAB,filter:blogFilter}, "", location.pathname+location.search+hash);
+        showBlogList();
+    }
     function showBlogList(){
         document.getElementById("blog-post").classList.add("hidden");
         document.getElementById("blog-list").classList.remove("hidden");
+        document.querySelectorAll("#blog-chips .nav-item").forEach(function(btn){
+            btn.classList.toggle("active", btn.getAttribute("data-filter")===blogFilter);
+        });
         const g=document.getElementById("blog-grid");
-        if(!blog.length){ g.innerHTML='<p class="empty">No posts yet.</p>'; return; }
-        const sorted=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); });
+        const sorted=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); })
+            .filter(function(p){ return blogFilter==="all" || postCategory(p)===blogFilter; });
+        renderLatestWriting();
+        if(!sorted.length){
+            const msg=blogFilter==="economics"?"First Economics post coming soon.":(blogFilter==="notes"?"First Notes post coming soon.":"No posts yet.");
+            g.innerHTML='<p class="empty">'+msg+'</p>';
+            return;
+        }
         g.innerHTML=sorted.map(function(p){
+            const cat=postCategory(p);
+            const badge='<span class="badge-status'+(cat==="notes"?" badge-notes":"")+'">'+escapeHtml(categoryLabel(cat))+'</span>';
             return '<div class="card blog-card" onclick="openPost(\''+p.slug+'\')">'+
-                '<div class="card-title">'+escapeHtml(p.title)+'</div>'+
+                '<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+badge+'</div>'+
                 '<div class="exp-period" style="margin-top:4px">'+escapeHtml(p.date||"")+'</div>'+
                 '<p class="card-desc">'+escapeHtml(excerpt(p.body))+'</p>'+
                 '<div class="card-foot"><span class="g">Read →</span></div></div>';
         }).join("");
     }
+    function renderLatestWriting(){
+        const el=document.getElementById("latest-writing"); if(!el) return;
+        if(!blog.length){ el.style.display="none"; el.innerHTML=""; return; }
+        const p=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); })[0];
+        el.style.display="";
+        el.innerHTML='<h3 class="sub">Latest writing</h3>'+
+            '<div class="card-title">'+escapeHtml(p.title)+'</div>'+
+            '<div class="exp-period" style="margin-top:4px">'+escapeHtml(categoryLabel(postCategory(p)))+(p.date?" · "+escapeHtml(p.date):"")+'</div>'+
+            '<p class="card-desc">'+escapeHtml(excerpt(p.body))+'</p>'+
+            '<div class="card-foot"><button class="btn" onclick="openPost(\''+p.slug+'\')">Read</button></div>';
+    }
     function openPost(slug){ location.hash="post/"+encodeURIComponent(slug); }
-    function closePost(){ history.replaceState(null,"",location.pathname+location.search); showBlogList(); }
+    function closePost(){
+        const hash=(blogFilter&&blogFilter!=="all")?"#writing/"+blogFilter:"#writing";
+        history.replaceState(null,"", location.pathname+location.search+hash);
+        showBlogList();
+    }
     function showBlogPost(slug){
         const p=blog.find(function(x){return x.slug===slug;});
         document.getElementById("blog-list").classList.add("hidden");
         document.getElementById("blog-post").classList.remove("hidden");
         const pc=document.getElementById("post-content");
-        if(!p){ pc.innerHTML='<p class="empty">Post not found.</p>'; return; }
+        if(!p){ pc.innerHTML='<p class="empty">This post isn\'t available.</p>'; return; }
+        const cat=postCategory(p);
         const owner=isOwner?'<div class="no-print" style="display:flex;gap:10px;margin-top:22px"><button class="btn" onclick="editPost(\''+p.slug+'\')">Edit</button><button class="btn" onclick="deletePost(\''+p.slug+'\')">Delete</button></div>':"";
         pc.innerHTML='<h2 class="title" style="margin-bottom:4px">'+escapeHtml(p.title)+'</h2>'+
-            '<div class="exp-period" style="margin-bottom:22px">'+escapeHtml(p.date||"")+'</div>'+
+            '<div class="exp-period" style="margin-bottom:22px"><span class="badge-status'+(cat==="notes"?" badge-notes":"")+'">'+escapeHtml(categoryLabel(cat))+'</span> '+escapeHtml(p.date||"")+'</div>'+
             '<div class="prose">'+mdToHtml(p.body)+'</div>'+owner;
         window.scrollTo(0,0);
     }
-    function newPost(){ if(!isOwner)return; editingSlug=null; document.getElementById("blog-title").value=""; document.getElementById("blog-body").value=""; document.getElementById("blog-modal").classList.remove("hidden"); }
-    function editPost(slug){ if(!isOwner)return; const p=blog.find(function(x){return x.slug===slug;}); if(!p)return; editingSlug=slug; document.getElementById("blog-title").value=p.title; document.getElementById("blog-body").value=p.body; document.getElementById("blog-modal").classList.remove("hidden"); }
+    function newPost(){
+        if(!isOwner)return;
+        editingSlug=null;
+        document.getElementById("blog-title").value="";
+        document.getElementById("blog-body").value="";
+        document.getElementById("blog-category").value="economics";
+        document.getElementById("blog-modal").classList.remove("hidden");
+    }
+    function editPost(slug){
+        if(!isOwner)return;
+        const p=blog.find(function(x){return x.slug===slug;}); if(!p)return;
+        editingSlug=slug;
+        document.getElementById("blog-title").value=p.title;
+        document.getElementById("blog-body").value=p.body;
+        document.getElementById("blog-category").value=postCategory(p);
+        document.getElementById("blog-modal").classList.remove("hidden");
+    }
     function hideBlogModal(){ document.getElementById("blog-modal").classList.add("hidden"); }
     function saveBlogPost(){
         const title=document.getElementById("blog-title").value.trim(); if(!title)return;
         const body=document.getElementById("blog-body").value;
-        if(editingSlug){ const p=blog.find(function(x){return x.slug===editingSlug;}); if(p){p.title=title;p.body=body;} }
+        const category=document.getElementById("blog-category").value==="notes"?"notes":"economics";
+        if(editingSlug){ const p=blog.find(function(x){return x.slug===editingSlug;}); if(p){p.title=title;p.body=body;p.category=category;} }
         else {
             let slug=slugify(title)||("post-"+Date.now());
             if(blog.some(function(x){return x.slug===slug;})) slug=slug+"-"+Date.now().toString(36).slice(-4);
-            blog.unshift({id:Date.now(),slug:slug,title:title,body:body,date:new Date().toISOString().slice(0,10)});
+            blog.unshift({id:Date.now(),slug:slug,title:title,body:body,category:category,date:new Date().toISOString().slice(0,10)});
             editingSlug=slug;
         }
         saveDoc("public","blog",blog); hideBlogModal();
@@ -884,20 +1095,45 @@
     }
 
     /* ---- init ---- */
+    function showPreviewBanner(){
+        if(document.getElementById("preview-banner")) return;
+        const b=document.createElement("div");
+        b.id="preview-banner";
+        b.className="preview-banner no-print";
+        b.textContent="Local preview only. This page is not connected to the live site.";
+        document.body.insertBefore(b, document.body.firstChild);
+    }
     async function loadPublic(){
-        portfolio = await loadDoc("public","portfolio",[{title:"Personal Hub",desc:"This site — tasks, portfolio, CV and blog, with a private login.",link:"",status:"Live"}]);
+        const emptyCv={summary:"",experience:[],education:[],skills:[],certifications:[],recommendations:[],languages:[]};
+        if(isLocalPreview()){
+            try { await loadScript("/dev/fixtures.js"); }
+            catch(e){ console.warn("Local fixtures failed to load:", e.message); }
+            const m=window.MOCK_DATA||{};
+            portfolio=Array.isArray(m.portfolio)?m.portfolio:[];
+            cv=m.cv||emptyCv;
+            blog=Array.isArray(m.blog)?m.blog:[];
+        } else {
+            portfolio = await loadDoc("public","portfolio",[]);
+            cv = await loadDoc("public","cv",emptyCv);
+            blog = await loadDoc("public","blog",[]);
+        }
         renderPortfolio();
-        cv = await loadDoc("public","cv",{summary:"",experience:[],education:[],skills:[],certifications:[],recommendations:[],languages:[]});
         renderCv();
-        blog = await loadDoc("public","blog",[{id:1,slug:"welcome",title:"Welcome to my blog",body:"# Hello 👋\n\nThis is my first post. I'll write here about what I'm building and learning.\n\n- Built with vanilla JS + Firebase\n- Hosted on Firebase Hosting\n\nMore soon.",date:new Date().toISOString().slice(0,10)}]);
-        setStatus(firebaseReady?"cloud-ok":"local");
+        renderLatestWriting();
         route();
     }
-    window.onload = function(){
-        setStatus("connecting");
-        renderNav(); applyMode(); loadPublic();
-        if(firebaseReady){ auth.onAuthStateChanged(handleAuth); } else { handleAuth(null); }
-        document.getElementById("task-input").addEventListener("keydown", function(e){ if(e.key==="Enter") addTask(); });
+    window.onload = async function(){
+        try {
+            if(isLocalPreview()) showPreviewBanner();
+            else await bootFirebase();
+            renderNav(); applyMode();
+            await loadPublic();
+            if(firebaseReady && auth) auth.onAuthStateChanged(handleAuth);
+            else handleAuth(null);
+            document.getElementById("task-input").addEventListener("keydown", function(e){ if(e.key==="Enter") addTask(); });
+        } finally {
+            document.body.setAttribute("data-ready","1");
+        }
     };
     </script>
 </body>

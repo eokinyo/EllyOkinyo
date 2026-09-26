@@ -4,7 +4,10 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "theme-preview.html",
+      "dev/**",
+      "scripts/**"
     ],
     "rewrites": [
       {
