@@ -71,7 +71,7 @@
     #sidebar{background:var(--bg);border-bottom:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0}
     @media(min-width:768px){#sidebar{width:264px;border-bottom:none;border-right:1px solid var(--line)}}
     .brand{padding:24px 22px 18px;text-align:center}
-    .brand h1{margin:0;font-size:26px;font-weight:800;color:var(--cream);letter-spacing:.01em}
+    .brand .site-name{margin:0;font-size:26px;font-weight:800;color:var(--cream);letter-spacing:.01em}
     .brand .role{font-size:13px;color:var(--orange)} .brand .role span{color:var(--text)}
     .avatar-wrap{width:112px;height:112px;border-radius:50%;margin:16px auto 0;position:relative;overflow:hidden;
         background:#3c3836;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
@@ -94,7 +94,7 @@
     .wrap{max-width:760px;margin:0 auto;width:100%} .wrap-wide{max-width:1000px;margin:0 auto;width:100%}
 
     h2.title{font-size:30px;font-weight:800;color:var(--cream);margin:0 0 22px;letter-spacing:.01em}
-    h3.sub{font-size:19px;font-weight:700;color:var(--cream);margin:0 0 14px}
+    h2.sub,h3.sub{font-size:19px;font-weight:700;color:var(--cream);margin:0 0 14px}
 
     .card{border:1px solid var(--line);border-radius:18px;padding:20px;background:transparent;transition:border-color 150ms ease}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -153,7 +153,8 @@
     .draft-note{margin:-6px 0 18px;color:var(--muted);font-size:13px}
     .contact-email{color:var(--cream)}
     #latest-writing{margin-top:32px}
-    .preview-banner{background:var(--bg-soft);color:var(--muted);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
+    .preview-banner{background:var(--bg-soft);color:var(--text);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
+    .home-blocks a,.prose a,#cv-summary-view a{text-decoration:underline;text-underline-offset:2px}
     body:not([data-ready]) .owner-only{display:none!important}
     .home-cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:30px}
     @media(max-width:767px){ .brand{display:none} }
@@ -173,7 +174,7 @@
 
     /* blog */
     .blog-card{cursor:pointer} .blog-card:hover{border-color:var(--orange)}
-    .back-link{cursor:pointer;color:var(--olive);display:inline-block;margin-bottom:18px}
+    .back-link{cursor:pointer;color:var(--olive);display:inline-block;margin-bottom:18px;background:none;border:none;padding:0;font:inherit;text-align:left}
     .md-hint{font-size:12px;color:var(--muted);margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:6px}
     .md-hint code{background:rgba(235,219,178,.06);padding:1px 5px;border-radius:4px;color:var(--yellow)}
     .prose{font-size:15px;line-height:1.75}
@@ -210,7 +211,7 @@
         #sidebar,.no-print,#owner-banner,.overlay,.site-footer{display:none!important}
         .tab-content:not(.active){display:none!important}
         body{background:#fff;color:#1d2021} main{padding:0}
-        h2.title,h3.sub,.card-title,.exp-role,.task-text,.cream,.g,.prose h1,.prose h2,.prose h3{color:#1d2021!important}
+        h2.title,h2.sub,h3.sub,.card-title,.exp-role,.task-text,.cream,.g,.prose h1,.prose h2,.prose h3{color:#1d2021!important}
         .card,.exp{border-color:#ccc!important}
         .badge{border-color:#ccc!important;color:#333!important;background:none!important}
     }
@@ -225,7 +226,7 @@
     <div class="app">
         <div id="sidebar">
             <div class="brand">
-                <h1>Elly Okinyo</h1>
+                <p class="site-name">Elly Okinyo</p>
                 <div class="role" id="sidebar-role">Economist <span>· Researcher &amp; Data Analyst</span></div>
                 <div class="avatar-wrap">
                     <i class="fa-solid fa-user"></i>
@@ -257,7 +258,7 @@
                 <div class="home-blocks">
                     <div class="grid2">
                         <div class="card">
-                            <h3 class="sub">How I work</h3>
+                            <h2 class="sub">How I work</h2>
                             <ul class="work-list">
                                 <li><strong class="cream">Method first.</strong> I choose the model to fit the question and the data, benchmark it against something simple, and report when the fancy option doesn't win.</li>
                                 <li><strong class="cream">Reproducible by default.</strong> Code, data steps and outputs live in version control so anyone can rerun every table, as with my thesis repo.</li>
@@ -265,7 +266,7 @@
                             </ul>
                         </div>
                         <div class="card">
-                            <h3 class="sub">Research interests</h3>
+                            <h2 class="sub">Research interests</h2>
                             <p style="margin:0">Labour markets, especially how downturns hit different groups. In Finland, unemployment among people of foreign background aged 20–64 was 16.7% in 2024, against 6.6% for people of Finnish background (<a href="https://stat.fi/en/publication/cm6uhzyb4edzf07uqd79p16ku">Statistics Finland</a>). Remittances and household finance, with a focus on Kenya's diaspora inflows and what drives them. Time-series econometrics and forecasting: volatility models, forecast evaluation, and when machine learning helps and when it doesn't.</p>
                         </div>
                     </div>
@@ -386,7 +387,7 @@
                     <div id="blog-grid" class="grid2"></div>
                 </div>
                 <div id="blog-post" class="hidden wrap">
-                    <a class="back-link" onclick="closePost()">← All posts</a>
+                    <button type="button" class="back-link" onclick="closePost()">← All posts</button>
                     <div id="post-content"></div>
                 </div>
             </section>
@@ -484,7 +485,8 @@
     /* ---- Firebase ---- */
     let db=null, auth=null, provider=null, firebaseReady=false;
     function isLocalPreview(){
-        const h=location.hostname;
+        const h=String(location.hostname||"").toLowerCase();
+        if(h==="ellyokinyo.com" || h==="www.ellyokinyo.com") return false;
         return h==="localhost" || h==="127.0.0.1" || h==="::1";
     }
     function loadScript(src){

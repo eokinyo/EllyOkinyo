@@ -62,5 +62,5 @@ const server = http.createServer(function (req, res) {
 });
 
 server.listen(port, "127.0.0.1", function () {
-  console.log("Preview: http://127.0.0.1:" + port + "/?mock=1");
+  console.log("Preview: http://127.0.0.1:" + port + "/");
 });
