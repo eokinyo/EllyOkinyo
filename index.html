@@ -151,6 +151,12 @@
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
     .badge-notes{color:var(--yellow);border-color:rgba(250,189,47,.5);background:rgba(250,189,47,.12)}
     .draft-note{margin:-6px 0 18px;color:var(--muted);font-size:13px}
+    a.btn{text-decoration:none}
+    .more-github{margin:22px 0 0}
+    .portfolio-data{margin-top:28px}
+    .portfolio-data summary{cursor:pointer;color:var(--muted);font-size:14px}
+    .portfolio-data .owner-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+    .portfolio-data .draft-note{margin:14px 0}
     .contact-email{color:var(--cream)}
     #latest-writing{margin-top:32px}
     .preview-banner{background:var(--bg-soft);color:var(--text);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
@@ -291,21 +297,26 @@
                 <div id="tasks-container"></div>
             </section>
 
-            <!-- 1: Portfolio -->
+            <!-- 1: Portfolio. Visitors and the owner see the same five projects. -->
             <section id="content-1" class="tab-content wrap-wide">
                 <div class="head-row">
                     <h2 class="title" style="margin:0"><span class="g">Research</span> &amp; Projects</h2>
-                    <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                </div>
+                <div id="portfolio-grid" class="grid2"></div>
+                <p class="more-github"><a class="btn" href="https://github.com/eokinyo" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> More on GitHub</a></p>
+                <details class="owner-only no-print portfolio-data">
+                    <summary>Portfolio data (not shown publicly)</summary>
+                    <p class="draft-note">Saved on this account. The five projects above are what visitors see.</p>
+                    <div class="owner-tools">
                         <span id="import-status" style="font-size:12px;color:var(--muted)"></span>
                         <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import</button>
                         <button onclick="sortPortfolioRecent()" class="btn"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort: recent</button>
                         <button id="select-btn" onclick="toggleSelectMode()" class="btn"><i class="fa-solid fa-check-double"></i> Select</button>
                         <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New</button>
                     </div>
-                </div>
-                <p class="owner-only draft-note">Draft list (not public)</p>
-                <div id="portfolio-bulk"></div>
-                <div id="portfolio-grid" class="grid2"></div>
+                    <div id="portfolio-bulk"></div>
+                    <div id="portfolio-owner-grid" class="grid2"></div>
+                </details>
             </section>
 
             <!-- 2: CV / Profile -->
@@ -727,7 +738,7 @@
             label.textContent=start.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
     }
 
-    /* ---- portfolio (public visitors see the curated list; owner edits Firestore) ---- */
+    /* ---- portfolio (everyone sees the curated list; owner data stays in the collapsed panel) ---- */
     const CURATED_PORTFOLIO = [
         { title: "Does Google Trends Improve Bitcoin Volatility Forecasts? (MSc thesis)",
           desc: "Master's thesis, University of Helsinki (Research Track), supervised by Prof. Mika Meitz. Compares GARCH(1,1) and IGARCH(1,1), under normal and Student-t innovations and with and without lagged Google Trends attention, against Random Forest regression on daily data from Jan 2017 to Sep 2025. Evaluated with QLIKE loss and SPA and MCS tests. No model significantly beat a Gaussian GARCH(1,1), and sentiment added little. Fully reproducible in R and Python.",
@@ -746,29 +757,17 @@
           link: "https://github.com/eokinyo/EllyOkinyo", status: "Live" }
     ];
     let portfolio=[], selectMode=false, selected=new Set();
-    function renderPortfolio(){
-        const grid=document.getElementById("portfolio-grid");
-        const bulk=document.getElementById("portfolio-bulk");
-        const list=isOwner ? portfolio : CURATED_PORTFOLIO;
-        if(bulk){
-            if(isOwner && selectMode){
-                bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
-                    '<button class="btn" onclick="selectAllProjects()">'+((portfolio.length&&selected.size===portfolio.length)?"Clear all":"Select all")+'</button>'+
-                    '<button class="btn" onclick="deleteSelectedProjects()"><i class="fa-solid fa-trash-can"></i> Delete selected</button>'+
-                    '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
-            } else bulk.innerHTML="";
-        }
-        if(!list.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
-        grid.innerHTML=list.map(function(p,i){
+    function projectCards(list, editable){
+        return list.map(function(p,i){
             const href=String(p.link||"").trim();
             const link=href?'<a href="'+escapeHtml(href)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View →</a>':'<span></span>';
             const status=p.status?'<span class="badge-status">'+escapeHtml(p.status)+'</span>':"";
             const descText=(!p.desc || p.desc==="No description")?"":p.desc;
             let ctrls="", cardOpen='<div class="card">';
-            if(isOwner && selectMode){
+            if(editable && isOwner && selectMode){
                 cardOpen='<div class="card'+(selected.has(i)?" selected":"")+'" onclick="toggleSelect('+i+')" style="cursor:pointer">';
                 ctrls='<input type="checkbox" '+(selected.has(i)?"checked":"")+' class="no-print" style="pointer-events:none">';
-            } else if(isOwner){
+            } else if(editable && isOwner){
                 ctrls='<div class="card-ctrls no-print">'+
                     '<button class="icon-btn" title="Move up" onclick="moveProject('+i+',-1)"><i class="fa-solid fa-arrow-up"></i></button>'+
                     '<button class="icon-btn" title="Move down" onclick="moveProject('+i+',1)"><i class="fa-solid fa-arrow-down"></i></button>'+
@@ -778,6 +777,23 @@
             return cardOpen+'<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
                 (descText?'<p class="card-desc">'+escapeHtml(descText)+'</p>':"")+'<div class="card-foot">'+link+status+'</div></div>';
         }).join("");
+    }
+    function renderPortfolio(){
+        const grid=document.getElementById("portfolio-grid");
+        const ownerGrid=document.getElementById("portfolio-owner-grid");
+        const bulk=document.getElementById("portfolio-bulk");
+        if(grid) grid.innerHTML=CURATED_PORTFOLIO.length?projectCards(CURATED_PORTFOLIO,false):'<p class="empty">No projects yet.</p>';
+        if(bulk){
+            if(isOwner && selectMode){
+                bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
+                    '<button class="btn" onclick="selectAllProjects()">'+((portfolio.length&&selected.size===portfolio.length)?"Clear all":"Select all")+'</button>'+
+                    '<button class="btn" onclick="deleteSelectedProjects()"><i class="fa-solid fa-trash-can"></i> Delete selected</button>'+
+                    '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
+            } else bulk.innerHTML="";
+        }
+        if(!ownerGrid) return;
+        if(!isOwner){ ownerGrid.innerHTML=""; return; }
+        ownerGrid.innerHTML=portfolio.length?projectCards(portfolio,true):'<p class="empty" style="text-align:left">Nothing saved yet.</p>';
     }
     let editingProjectIndex=null;
     function showProjectModal(i){
@@ -842,7 +858,7 @@
                     added++; changed=true;
                  });
             if(changed){ selected.clear(); portfolio.sort(function(a,b){ return projDate(b)-projDate(a); }); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
-            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+", newest first — use Select to trim."):(changed?"Refreshed & sorted by most recent.":"No new repos to import.");
+            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+" into Portfolio data. Visitors still see the five selected projects."):(changed?"Refreshed the saved list.":"No new repos to import.");
         } catch(e){
             statusEl.textContent=e.message||"Import failed.";
         } finally {

@@ -2,6 +2,7 @@
    index.html loads this on localhost / 127.0.0.1 / ::1 and never initialises Firebase.
    Production does not request this file. Firebase Hosting ignores dev/.
    cv is a read-only snapshot of the live public/cv document, for layout review only.
+   portfolio is example data for the owner-only list. It is not the public Research page.
    Nothing here is written back to Firestore. */
 window.MOCK_DATA = {
   cv: {
@@ -135,6 +136,22 @@ window.MOCK_DATA = {
   ],
   "summary": "I'm an economist and data analyst in Helsinki. I completed the Research Track of the Master's Programme in Economics at the University of Helsinki in May 2026. My thesis, supervised by Professor Mika Meitz, compared GARCH-family models with Random Forest regression for forecasting Bitcoin volatility, and tested whether Google Trends search interest adds predictive power. It largely doesn't: a Gaussian GARCH(1,1) was the benchmark that no competitor significantly beat.\n\nMost of my recent work has been hands-on data work on CHARM, a University of Helsinki Faculty of Theology project on Finland's oldest written culture. I joined the project as a Research Trainee in autumn 2025. As a Research Assistant from February to April 2026, I cleaned and structured high-dimensional spectral data from medieval manuscript fragments and built reproducible R and Python pipelines for clustering and similarity analysis. I have been a Research Assistant on CHARM again since August 2026. Before moving to Finland I did empirical research support at the Strathmore Data Analytics Centre in Nairobi, and project and programme coordination at Strathmore University and the Strathmore Educational Trust.\n\nI work in R, Stata and Python, and I'm most interested in labour markets, remittances, and the Finnish economy."
 },
-  portfolio: [],
+  portfolio: [
+    {"title":"Example repo 01","desc":"Example data, not a real project.","link":"https://example.com/repo-01","status":"Example"},
+    {"title":"Example repo 02","desc":"Example data, not a real project.","link":"https://example.com/repo-02","status":"Example"},
+    {"title":"Example repo 03","desc":"Example data, not a real project.","link":"https://example.com/repo-03","status":"Example"},
+    {"title":"Example repo 04","desc":"Example data, not a real project.","link":"https://example.com/repo-04","status":"Example"},
+    {"title":"Example repo 05","desc":"Example data, not a real project.","link":"https://example.com/repo-05","status":"Example"},
+    {"title":"Example repo 06","desc":"Example data, not a real project.","link":"https://example.com/repo-06","status":"Example"},
+    {"title":"Example repo 07","desc":"Example data, not a real project.","link":"https://example.com/repo-07","status":"Example"},
+    {"title":"Example repo 08","desc":"Example data, not a real project.","link":"https://example.com/repo-08","status":"Example"},
+    {"title":"Example repo 09","desc":"Example data, not a real project.","link":"https://example.com/repo-09","status":"Example"},
+    {"title":"Example repo 10","desc":"Example data, not a real project.","link":"https://example.com/repo-10","status":"Example"},
+    {"title":"Example repo 11","desc":"Example data, not a real project.","link":"https://example.com/repo-11","status":"Example"},
+    {"title":"Example repo 12","desc":"Example data, not a real project.","link":"https://example.com/repo-12","status":"Example"},
+    {"title":"Example repo 13","desc":"Example data, not a real project.","link":"https://example.com/repo-13","status":"Example"},
+    {"title":"Example repo 14","desc":"Example data, not a real project.","link":"https://example.com/repo-14","status":"Example"},
+    {"title":"Example repo 15","desc":"Example data, not a real project.","link":"https://example.com/repo-15","status":"Example"}
+  ],
   blog: []
 };
