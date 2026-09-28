@@ -7,6 +7,11 @@
     "ignore": [
       "firebase.json",
       "**/.*",
+      ".gitignore",
+      ".firebaserc",
+      ".firebase/**",
+      "**/.git/**",
+      ".git/**",
       "**/node_modules/**",
       "theme-preview.html",
       "dev/**",

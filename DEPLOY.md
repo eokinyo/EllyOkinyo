@@ -9,7 +9,7 @@ firebase login
 firebase deploy --only hosting
 ```
 
-`firebase login` is only needed if this machine is not already logged in. The deploy runs `node scripts/check-deploy.js` first. If `config.js` or `elly.jpg` is missing or empty, it stops with a message and does not upload.
+`firebase login` is only needed if this machine is not already logged in. The deploy runs `node scripts/check-deploy.js` first. If `config.js` or `elly.jpg` is missing or empty, or if the hosting ignore list does not contain `.git/**`, it stops with a message and does not upload.
 
 ## After deploy
 
@@ -22,3 +22,4 @@ Check https://ellyokinyo.com/ on a computer and on a phone.
 - Home, Writing, Research & Projects, CV, and Contact all render.
 - A link preview (message or social post) shows the title, description, and image.
 - https://ellyokinyo.com/theme-preview.html shows the homepage, not the theme preview.
+- https://ellyokinyo.com/.git/config shows the homepage, not the git config.
