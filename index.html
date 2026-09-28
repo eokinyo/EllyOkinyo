@@ -151,6 +151,12 @@
     .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 22px}
     .badge-notes{color:var(--yellow);border-color:rgba(250,189,47,.5);background:rgba(250,189,47,.12)}
     .draft-note{margin:-6px 0 18px;color:var(--muted);font-size:13px}
+    a.btn{text-decoration:none}
+    .more-github{margin:22px 0 0}
+    .portfolio-data{margin-top:28px}
+    .portfolio-data summary{cursor:pointer;color:var(--muted);font-size:14px}
+    .portfolio-data .owner-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
+    .portfolio-data .draft-note{margin:14px 0}
     .contact-email{color:var(--cream)}
     #latest-writing{margin-top:32px}
     .preview-banner{background:var(--bg-soft);color:var(--text);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
@@ -291,21 +297,26 @@
                 <div id="tasks-container"></div>
             </section>
 
-            <!-- 1: Portfolio -->
+            <!-- 1: Portfolio. Visitors and the owner see the same five projects. -->
             <section id="content-1" class="tab-content wrap-wide">
                 <div class="head-row">
                     <h2 class="title" style="margin:0"><span class="g">Research</span> &amp; Projects</h2>
-                    <div class="owner-only" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+                </div>
+                <div id="portfolio-grid" class="grid2"></div>
+                <p class="more-github"><a class="btn" href="https://github.com/eokinyo" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> More on GitHub</a></p>
+                <details class="owner-only no-print portfolio-data">
+                    <summary>Portfolio data (not shown publicly)</summary>
+                    <p class="draft-note">Saved on this account. The five projects above are what visitors see.</p>
+                    <div class="owner-tools">
                         <span id="import-status" style="font-size:12px;color:var(--muted)"></span>
                         <button id="gh-import-btn" onclick="importGithub()" class="btn"><i class="fa-brands fa-github"></i> Import</button>
                         <button onclick="sortPortfolioRecent()" class="btn"><i class="fa-solid fa-arrow-down-wide-short"></i> Sort: recent</button>
                         <button id="select-btn" onclick="toggleSelectMode()" class="btn"><i class="fa-solid fa-check-double"></i> Select</button>
                         <button onclick="showProjectModal()" class="btn btn-accent"><i class="fa-solid fa-plus"></i> New</button>
                     </div>
-                </div>
-                <p class="owner-only draft-note">Draft list (not public)</p>
-                <div id="portfolio-bulk"></div>
-                <div id="portfolio-grid" class="grid2"></div>
+                    <div id="portfolio-bulk"></div>
+                    <div id="portfolio-owner-grid" class="grid2"></div>
+                </details>
             </section>
 
             <!-- 2: CV / Profile -->
@@ -560,6 +571,10 @@
     function wantsAdmin(){
         return new URLSearchParams(location.search).has("admin") || location.hash==="#admin";
     }
+    function localOwnerPreview(){
+        /* Localhost only. saveDoc does not run here, so this cannot write to Firestore. */
+        return isLocalPreview() && new URLSearchParams(location.search).has("owner");
+    }
     function renderAuthUI(){
         const box=document.getElementById("auth-box");
         if(currentUser) box.innerHTML='<div style="color:var(--text)">'+escapeHtml(currentUser.email||"signed in")+'</div><button onclick="signOut()">sign out</button>';
@@ -723,7 +738,7 @@
             label.textContent=start.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
     }
 
-    /* ---- portfolio (public visitors see the curated list; owner edits Firestore) ---- */
+    /* ---- portfolio (everyone sees the curated list; owner data stays in the collapsed panel) ---- */
     const CURATED_PORTFOLIO = [
         { title: "Does Google Trends Improve Bitcoin Volatility Forecasts? (MSc thesis)",
           desc: "Master's thesis, University of Helsinki (Research Track), supervised by Prof. Mika Meitz. Compares GARCH(1,1) and IGARCH(1,1), under normal and Student-t innovations and with and without lagged Google Trends attention, against Random Forest regression on daily data from Jan 2017 to Sep 2025. Evaluated with QLIKE loss and SPA and MCS tests. No model significantly beat a Gaussian GARCH(1,1), and sentiment added little. Fully reproducible in R and Python.",
@@ -742,29 +757,17 @@
           link: "https://github.com/eokinyo/EllyOkinyo", status: "Live" }
     ];
     let portfolio=[], selectMode=false, selected=new Set();
-    function renderPortfolio(){
-        const grid=document.getElementById("portfolio-grid");
-        const bulk=document.getElementById("portfolio-bulk");
-        const list=isOwner ? portfolio : CURATED_PORTFOLIO;
-        if(bulk){
-            if(isOwner && selectMode){
-                bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
-                    '<button class="btn" onclick="selectAllProjects()">'+((portfolio.length&&selected.size===portfolio.length)?"Clear all":"Select all")+'</button>'+
-                    '<button class="btn" onclick="deleteSelectedProjects()"><i class="fa-solid fa-trash-can"></i> Delete selected</button>'+
-                    '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
-            } else bulk.innerHTML="";
-        }
-        if(!list.length){ grid.innerHTML='<p class="empty">No projects yet.</p>'; return; }
-        grid.innerHTML=list.map(function(p,i){
+    function projectCards(list, editable){
+        return list.map(function(p,i){
             const href=String(p.link||"").trim();
             const link=href?'<a href="'+escapeHtml(href)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">View →</a>':'<span></span>';
             const status=p.status?'<span class="badge-status">'+escapeHtml(p.status)+'</span>':"";
             const descText=(!p.desc || p.desc==="No description")?"":p.desc;
             let ctrls="", cardOpen='<div class="card">';
-            if(isOwner && selectMode){
+            if(editable && isOwner && selectMode){
                 cardOpen='<div class="card'+(selected.has(i)?" selected":"")+'" onclick="toggleSelect('+i+')" style="cursor:pointer">';
                 ctrls='<input type="checkbox" '+(selected.has(i)?"checked":"")+' class="no-print" style="pointer-events:none">';
-            } else if(isOwner){
+            } else if(editable && isOwner){
                 ctrls='<div class="card-ctrls no-print">'+
                     '<button class="icon-btn" title="Move up" onclick="moveProject('+i+',-1)"><i class="fa-solid fa-arrow-up"></i></button>'+
                     '<button class="icon-btn" title="Move down" onclick="moveProject('+i+',1)"><i class="fa-solid fa-arrow-down"></i></button>'+
@@ -774,6 +777,23 @@
             return cardOpen+'<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+ctrls+'</div>'+
                 (descText?'<p class="card-desc">'+escapeHtml(descText)+'</p>':"")+'<div class="card-foot">'+link+status+'</div></div>';
         }).join("");
+    }
+    function renderPortfolio(){
+        const grid=document.getElementById("portfolio-grid");
+        const ownerGrid=document.getElementById("portfolio-owner-grid");
+        const bulk=document.getElementById("portfolio-bulk");
+        if(grid) grid.innerHTML=CURATED_PORTFOLIO.length?projectCards(CURATED_PORTFOLIO,false):'<p class="empty">No projects yet.</p>';
+        if(bulk){
+            if(isOwner && selectMode){
+                bulk.innerHTML='<div class="bulk-bar"><span>'+selected.size+' selected</span>'+
+                    '<button class="btn" onclick="selectAllProjects()">'+((portfolio.length&&selected.size===portfolio.length)?"Clear all":"Select all")+'</button>'+
+                    '<button class="btn" onclick="deleteSelectedProjects()"><i class="fa-solid fa-trash-can"></i> Delete selected</button>'+
+                    '<button class="btn" onclick="toggleSelectMode()">Done</button></div>';
+            } else bulk.innerHTML="";
+        }
+        if(!ownerGrid) return;
+        if(!isOwner){ ownerGrid.innerHTML=""; return; }
+        ownerGrid.innerHTML=portfolio.length?projectCards(portfolio,true):'<p class="empty" style="text-align:left">Nothing saved yet.</p>';
     }
     let editingProjectIndex=null;
     function showProjectModal(i){
@@ -838,7 +858,7 @@
                     added++; changed=true;
                  });
             if(changed){ selected.clear(); portfolio.sort(function(a,b){ return projDate(b)-projDate(a); }); saveDoc("public","portfolio",portfolio); renderPortfolio(); }
-            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+", newest first — use Select to trim."):(changed?"Refreshed & sorted by most recent.":"No new repos to import.");
+            statusEl.textContent=added>0?("Imported "+added+" repo"+(added>1?"s":"")+" into Portfolio data. Visitors still see the five selected projects."):(changed?"Refreshed the saved list.":"No new repos to import.");
         } catch(e){
             statusEl.textContent=e.message||"Import failed.";
         } finally {
@@ -847,24 +867,169 @@
         }
     }
 
+    /* cv-sort:start */
+var CV_MONTHS = {
+  jan: 1, january: 1,
+  feb: 2, february: 2,
+  mar: 3, march: 3,
+  apr: 4, april: 4,
+  may: 5,
+  jun: 6, june: 6,
+  jul: 7, july: 7,
+  aug: 8, august: 8,
+  sep: 9, sept: 9, september: 9,
+  oct: 10, october: 10,
+  nov: 11, november: 11,
+  dec: 12, december: 12
+};
+
+function cvOngoingWord(s) {
+  return /^(present|current|now|ongoing)$/i.test(String(s || "").trim());
+}
+
+function cvParsePoint(s) {
+  var t = String(s || "").trim();
+  if (!t) return null;
+  if (cvOngoingWord(t)) return { ongoing: true };
+  var m = t.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (m) {
+    var mon = CV_MONTHS[m[1].toLowerCase()];
+    if (!mon) return null;
+    return { y: Number(m[2]), m: mon };
+  }
+  m = t.match(/^([A-Za-z]+)$/);
+  if (m && CV_MONTHS[m[1].toLowerCase()]) return { month: CV_MONTHS[m[1].toLowerCase()] };
+  m = t.match(/^(\d{4})$/);
+  if (m) return { y: Number(m[1]), m: 0 };
+  return null;
+}
+
+function cvWithYear(point, year) {
+  if (!point || point.ongoing) return null;
+  if (point.y != null) return { y: point.y, m: point.m };
+  if (point.month && year != null) return { y: year, m: point.month };
+  return null;
+}
+
+function parseCvPeriod(text) {
+  var raw = String(text == null ? "" : text).replace(/\u00a0/g, " ").trim();
+  if (!raw) return null;
+  raw = raw.replace(/[\u2013\u2014]/g, "-");
+  var ongoing = false;
+  if (/(?:-|\bto)\s*$/i.test(raw)) {
+    ongoing = true;
+    raw = raw.replace(/(?:-|\bto)\s*$/i, "").trim();
+  }
+  raw = raw.replace(/\s+to\s+/gi, " - ").replace(/\s*-\s*/g, " - ").replace(/\s+/g, " ").trim();
+  if (!raw) return ongoing ? { ongoing: true, start: null, end: null } : null;
+  var parts = raw.split(" - ");
+  if (parts.length > 2) return null;
+  var a = cvParsePoint(parts[0]);
+  var b = parts.length === 2 ? cvParsePoint(parts[1]) : null;
+  if (!a && !b) return null;
+  if (a && a.ongoing) ongoing = true;
+  if (b && b.ongoing) ongoing = true;
+  if (parts.length === 1) {
+    if (!a || a.ongoing) return ongoing ? { ongoing: true, start: null, end: null } : null;
+    var only = cvWithYear(a, null);
+    if (!only) return null;
+    return { ongoing: ongoing, start: only, end: ongoing ? null : { y: only.y, m: only.m } };
+  }
+  var startYear = a && a.y != null ? a.y : (b && b.y != null ? b.y : null);
+  var endYear = b && b.y != null ? b.y : (a && a.y != null ? a.y : null);
+  var start = cvWithYear(a, startYear);
+  var end = ongoing ? null : cvWithYear(b, endYear);
+  if (!start && !end && !ongoing) return null;
+  if (!ongoing && !end) return null;
+  if (!start && !ongoing) return null;
+  return { ongoing: ongoing, start: start, end: end };
+}
+
+function cvDateKey(d) {
+  if (!d || d.y == null || !isFinite(d.y)) return null;
+  return d.y * 12 + (d.m || 0);
+}
+
+function cvNumericOrder(item) {
+  if (!item || item.order == null || item.order === "") return null;
+  if (typeof item.order === "number") return isFinite(item.order) ? item.order : null;
+  if (typeof item.order === "string" && /^-?\d+(\.\d+)?$/.test(item.order.trim())) {
+    var n = Number(item.order.trim());
+    return isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function compareCvRows(a, b) {
+  var aHas = a.order != null;
+  var bHas = b.order != null;
+  if (aHas || bHas) {
+    if (aHas && bHas) {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.index - b.index;
+    }
+    return aHas ? -1 : 1;
+  }
+  var ap = a.parsed;
+  var bp = b.parsed;
+  if (!ap && !bp) return a.index - b.index;
+  if (!ap) return 1;
+  if (!bp) return -1;
+  if (!!ap.ongoing !== !!bp.ongoing) return ap.ongoing ? -1 : 1;
+  if (!ap.ongoing) {
+    var ae = cvDateKey(ap.end);
+    var be = cvDateKey(bp.end);
+    if (ae == null && be != null) return 1;
+    if (be == null && ae != null) return -1;
+    if (ae != null && be != null && ae !== be) return be - ae;
+  }
+  var as = cvDateKey(ap.start);
+  var bs = cvDateKey(bp.start);
+  if (as == null && bs != null) return 1;
+  if (bs == null && as != null) return -1;
+  if (as != null && bs != null && as !== bs) return bs - as;
+  return a.index - b.index;
+}
+
+function sortCvEntries(entries, dateField) {
+  var list = Array.isArray(entries) ? entries : [];
+  var field = dateField || "period";
+  var rows = [];
+  for (var i = 0; i < list.length; i++) {
+    var item = list[i];
+    rows.push({
+      item: item,
+      index: i,
+      order: cvNumericOrder(item),
+      parsed: parseCvPeriod(item && item[field])
+    });
+  }
+  rows.sort(compareCvRows);
+  return rows.map(function (row) { return { item: row.item, index: row.index }; });
+}
+    /* cv-sort:end */
+
     /* ---- cv (public) ---- */
     let cv={summary:"",experience:[],education:[],skills:[]};
     function taglineHtml(t){ const s=String(t); const idx=s.indexOf("·"); if(idx>=0){ return escapeHtml(s.slice(0,idx).trim())+' <span>· '+escapeHtml(s.slice(idx+1).trim())+'</span>'; } return escapeHtml(s); }
     function renderCv(){
+        /* Display order only. cv.experience and the other arrays stay in stored order. */
         document.getElementById("cv-summary-view").textContent=cv.summary||"No summary yet.";
         const tagline=cv.tagline||"Economist · Researcher & Data Analyst";
         const hr=document.getElementById("home-role"); if(hr) hr.innerHTML=taglineHtml(tagline);
         const sr=document.getElementById("sidebar-role"); if(sr) sr.innerHTML=taglineHtml(tagline);
         const exp=document.getElementById("cv-experience");
-        exp.innerHTML=cv.experience.length?cv.experience.map(function(e,i){
+        exp.innerHTML=cv.experience.length?sortCvEntries(cv.experience,"period").map(function(row){
+            const e=row.item, i=row.index;
             const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'experience\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteExperience('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
-            return '<div class="exp"><div class="card-head"><div class="exp-role">'+escapeHtml(e.role)+' • '+escapeHtml(e.company)+'</div>'+ctrls+'</div>'+
+            return '<div class="exp" data-stored-index="'+i+'"><div class="card-head"><div class="exp-role">'+escapeHtml(e.role)+' • '+escapeHtml(e.company)+'</div>'+ctrls+'</div>'+
                 '<div class="exp-period">'+escapeHtml(e.period)+'</div>'+(e.description?'<p class="exp-desc">'+escapeHtml(e.description)+'</p>':"")+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
         const edu=document.getElementById("cv-education");
-        edu.innerHTML=cv.education.length?cv.education.map(function(e,i){
+        edu.innerHTML=cv.education.length?sortCvEntries(cv.education,"period").map(function(row){
+            const e=row.item, i=row.index;
             const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'education\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteEducation('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
-            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.degree)+'</div><div class="exp-period">'+escapeHtml(e.school)+' • '+escapeHtml(e.period)+'</div></div>'+ctrls+'</div>';
+            return '<div class="card-head" data-stored-index="'+i+'"><div><div class="exp-role">'+escapeHtml(e.degree)+'</div><div class="exp-period">'+escapeHtml(e.school)+' • '+escapeHtml(e.period)+'</div></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
         const sk=document.getElementById("cv-skills");
         sk.innerHTML=cv.skills.length?cv.skills.map(function(s,i){
@@ -873,9 +1038,10 @@
         }).join(""):'<p class="empty" style="text-align:left">No skills added yet.</p>';
 
         const cf=document.getElementById("cv-certifications");
-        if(cf) cf.innerHTML=(cv.certifications&&cv.certifications.length)?cv.certifications.map(function(e,i){
+        if(cf) cf.innerHTML=(cv.certifications&&cv.certifications.length)?sortCvEntries(cv.certifications,"date").map(function(row){
+            const e=row.item, i=row.index;
             const ctrls=isOwner?('<div class="card-ctrls no-print"><button class="icon-btn" title="Edit" onclick="openEntryModal(\'certifications\','+i+')"><i class="fa-solid fa-pen"></i></button><button class="icon-btn" title="Delete" onclick="deleteCertification('+i+')"><i class="fa-solid fa-trash-can"></i></button></div>'):"";
-            return '<div class="card-head"><div><div class="exp-role">'+escapeHtml(e.name)+'</div><div class="exp-period">'+escapeHtml([e.issuer,e.date].filter(Boolean).join(" • "))+'</div></div>'+ctrls+'</div>';
+            return '<div class="card-head" data-stored-index="'+i+'"><div><div class="exp-role">'+escapeHtml(e.name)+'</div><div class="exp-period">'+escapeHtml([e.issuer,e.date].filter(Boolean).join(" • "))+'</div></div>'+ctrls+'</div>';
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
 
         const rc=document.getElementById("cv-recommendations");
@@ -915,9 +1081,9 @@
         }
     }
     const ENTRY_FIELDS = {
-        experience:{label:"Experience", fields:[["role","Role / job title"],["company","Company / organisation"],["period","Period (e.g. 2024 – Present)"],["description","Short description","area"]]},
-        education:{label:"Education", fields:[["degree","Degree / qualification"],["school","School / institution"],["period","Period (e.g. 2019 – 2023)"]]},
-        certifications:{label:"Certification", fields:[["name","Certification / course name"],["issuer","Issuer"],["date","Date"]]},
+        experience:{label:"Experience", fields:[["role","Role / job title"],["company","Company / organisation"],["period","Period (e.g. 2024 – Present)"],["description","Short description","area"],["order","Order (optional — lower numbers show first)"]]},
+        education:{label:"Education", fields:[["degree","Degree / qualification"],["school","School / institution"],["period","Period (e.g. 2019 – 2023)"],["order","Order (optional — lower numbers show first)"]]},
+        certifications:{label:"Certification", fields:[["name","Certification / course name"],["issuer","Issuer"],["date","Date"],["order","Order (optional — lower numbers show first)"]]},
         recommendations:{label:"Recommendation", fields:[["title","Title (e.g. Organisation — Role)"],["detail","Detail (dates or project)"],["link","Link to letter (optional)"]]},
         languages:{label:"Language", fields:[["name","Language"],["level","Level (e.g. C2, A2, Mother tongue)"]]}
     };
@@ -929,7 +1095,7 @@
         document.getElementById("entry-modal-title").textContent=(entryIndex!==null?"Edit ":"Add ")+cfg.label;
         const item=(entryIndex!==null && cv[section] && cv[section][entryIndex])?cv[section][entryIndex]:{};
         document.getElementById("entry-fields").innerHTML=cfg.fields.map(function(f){
-            const key=f[0], ph=f[1], type=f[2], val=escapeHtml(item[key]||"");
+            const key=f[0], ph=f[1], type=f[2], raw=item[key], val=escapeHtml(raw==null?"":raw);
             if(type==="area") return '<textarea id="entry-'+key+'" class="inp" placeholder="'+ph+'" style="margin-bottom:12px">'+val+'</textarea>';
             return '<input id="entry-'+key+'" class="inp" placeholder="'+ph+'" value="'+val+'" style="margin-bottom:12px">';
         }).join("");
@@ -939,7 +1105,16 @@
     function saveEntry(){
         if(!isOwner || !entrySection) return;
         const cfg=ENTRY_FIELDS[entrySection]; const obj={}; let hasValue=false;
-        cfg.fields.forEach(function(f){ const el=document.getElementById("entry-"+f[0]); const v=el?el.value.trim():""; obj[f[0]]=v; if(v) hasValue=true; });
+        cfg.fields.forEach(function(f){
+            const el=document.getElementById("entry-"+f[0]); const v=el?el.value.trim():"";
+            if(f[0]==="order"){
+                if(!v) return;
+                const n=Number(v);
+                if(!isFinite(n)) return;
+                obj.order=n; hasValue=true; return;
+            }
+            obj[f[0]]=v; if(v) hasValue=true;
+        });
         if(!hasValue){ hideEntryModal(); return; }
         cv[entrySection]=cv[entrySection]||[];
         if(entryIndex!==null && cv[entrySection][entryIndex]) cv[entrySection][entryIndex]=obj;
@@ -1130,7 +1305,8 @@
             else await bootFirebase();
             renderNav(); applyMode();
             await loadPublic();
-            if(firebaseReady && auth) auth.onAuthStateChanged(handleAuth);
+            if(localOwnerPreview()) handleAuth({uid:OWNER_UID, email:"local preview"});
+            else if(firebaseReady && auth) auth.onAuthStateChanged(handleAuth);
             else handleAuth(null);
             document.getElementById("task-input").addEventListener("keydown", function(e){ if(e.key==="Enter") addTask(); });
         } finally {
