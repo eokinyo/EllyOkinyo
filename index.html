@@ -114,29 +114,9 @@
     input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive);cursor:pointer;flex:0 0 auto}
     ::placeholder{color:var(--muted)}
 
-    .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:640px){.form-grid{grid-template-columns:5fr 3fr 2fr 2fr}}
-    .task-row{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin-bottom:10px}
-    .task-row.done{opacity:.5} .task-main{flex:1;min-width:0} .task-text{color:var(--cream)}
-    .task-text.strike{text-decoration:line-through;color:var(--text)} .task-due{font-size:12px;color:var(--muted);margin-top:2px}
-    .badge{font-size:12px;padding:3px 11px;border-radius:999px;border:1px solid;flex:0 0 auto}
-    .badge-high{color:var(--red-bright);border-color:rgba(251,73,52,.5);background:rgba(251,73,52,.12)}
-    .badge-medium{color:var(--yellow);border-color:rgba(250,189,47,.5);background:rgba(250,189,47,.12)}
-    .badge-low{color:var(--text);border-color:var(--line)}
     .badge-status{color:var(--olive);border:1px solid rgba(184,187,38,.4);background:rgba(184,187,38,.12);font-size:12px;padding:3px 11px;border-radius:999px}
     .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex:0 0 auto}
     .icon-btn:hover{color:var(--red-bright)} .empty{color:var(--muted);text-align:center;padding:34px 0}
-    .cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
-    @media(max-width:820px){.cal-grid{grid-template-columns:1fr}}
-    .cal-day{border:1px solid var(--line);border-radius:12px;padding:10px;min-height:104px}
-    .cal-day.cal-today{border-color:var(--olive);background:rgba(184,187,38,.06)}
-    .cal-day-head{font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
-    .cal-day-head span{color:var(--cream);font-weight:700;font-size:14px}
-    .cal-task{font-size:12px;padding:5px 8px;border-radius:8px;margin-bottom:6px;cursor:pointer;border-left:3px solid var(--muted);background:rgba(235,219,178,.04);color:var(--cream);line-height:1.35}
-    .cal-task.p-high{border-left-color:var(--red-bright)} .cal-task.p-medium{border-left-color:var(--yellow)} .cal-task.p-low{border-left-color:var(--muted)}
-    .cal-task.done{opacity:.5;text-decoration:line-through}
-    .cal-empty{color:var(--muted);font-size:12px}
     .home-hero{text-align:center;max-width:640px;margin:20px auto;padding:10px 0}
     .home-avatar{width:132px;height:132px;margin:0 auto 20px}
     .home-name{font-size:40px;font-weight:800;color:var(--cream);margin:0;letter-spacing:.01em}
@@ -214,9 +194,8 @@
         #sidebar,.no-print,.overlay,.site-footer{display:none!important}
         .tab-content:not(.active){display:none!important}
         body{background:#fff;color:#1d2021} main{padding:0}
-        h2.title,h2.sub,h3.sub,.card-title,.exp-role,.task-text,.cream,.g,.prose h1,.prose h2,.prose h3{color:#1d2021!important}
+        h2.title,h2.sub,h3.sub,.card-title,.exp-role,.cream,.g,.prose h1,.prose h2,.prose h3{color:#1d2021!important}
         .card,.exp{border-color:#ccc!important}
-        .badge{border-color:#ccc!important;color:#333!important;background:none!important}
     }
 </style>
 </head>
@@ -453,7 +432,7 @@
 
     /* ---- auth ---- */
     function signIn(){ if(!auth){alert("Sign-in unavailable: Firebase isn't configured yet.");return;} auth.signInWithPopup(provider).catch(function(e){alert("Sign-in failed: "+e.message);}); }
-    function signOut(){ if(auth) auth.signOut(); }
+    function signOut(){ if(auth) auth.signOut(); else if(isLocalPreview()) handleAuth(null); }
     function wantsAdmin(){
         return new URLSearchParams(location.search).has("admin") || location.hash==="#admin";
     }
@@ -485,7 +464,7 @@
         renderPortfolio(); renderCv();
         const active=document.querySelector(".tab-content.active");
         if(active && active.id==="content-3") renderBlogView();
-        refreshPrivate();
+        settleInitialView();
         route();
         setStatus("cloud-ok");
     }
@@ -493,11 +472,10 @@
         const h=location.hash;
         return h.indexOf("#post/")===0 || h==="#home" || h==="#writing" || h.indexOf("#writing/")===0 || h==="#research" || h==="#cv" || h==="#contact";
     }
-    async function refreshPrivate(){
-        if(window.OwnerUI) await OwnerUI.refreshPrivate();
+    function settleInitialView(){
         if(firstAuth){
             firstAuth=false;
-            if(!hashIsSection() && location.hash!=="#admin") switchTab(isOwner?0:6, {silent:true});
+            if(!hashIsSection() && location.hash!=="#admin") switchTab(6, {silent:true});
         }
         else { const a=document.querySelector(".tab-content.active"); if(!a && !isOwner) switchTab(6, {silent:true}); }
     }
@@ -506,7 +484,6 @@
     function renderNav(){
         const nav=document.getElementById("nav-container"); let h="";
         h+=navBtn(6,"fa-house","Home","switchTab(6)");
-        if(isOwner && window.OwnerUI) h+=OwnerUI.navItems(navBtn);
         h+=navBtn(3,"fa-pen-nib","Writing","goWriting()");
         h+=navBtn(1,"fa-briefcase","Research &amp; Projects","switchTab(1)");
         h+=navBtn(2,"fa-user","CV","switchTab(2)");
@@ -528,7 +505,6 @@
             if(location.hash.indexOf("#post/")===0 && !opts.forceList) renderBlogView();
             else showBlogList();
         }
-        if(n===5 && window.OwnerUI) OwnerUI.renderCalendar();
         if(opts.silent) return;
         let hash="";
         if(n===6) hash="#home";

@@ -21,29 +21,6 @@
     })();
 
     /* ---- markup ---- */
-    const TASKS_SECTION=
-        '<section id="content-0" class="tab-content wrap" '+MARK+'>'+
-            '<h2 class="title">Today\'s <span class="g">Tasks</span></h2>'+
-            '<p id="today-date" style="margin:-14px 0 22px;color:var(--muted);font-size:14px"></p>'+
-            '<div class="card mb"><div class="form-grid">'+
-                '<input id="task-input" class="inp" type="text" placeholder="What needs to be done?">'+
-                '<input id="due-date" class="inp" type="date">'+
-                '<select id="priority" class="inp"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>'+
-                '<button onclick="addTask()" class="btn btn-accent" style="justify-content:center">Add</button>'+
-            '</div></div>'+
-            '<div id="tasks-container"></div>'+
-        '</section>';
-    const CALENDAR_SECTION=
-        '<section id="content-5" class="tab-content wrap-wide" '+MARK+'>'+
-            '<h2 class="title">Calendar</h2>'+
-            '<div class="cal-nav">'+
-                '<button class="btn" onclick="calPrev()" aria-label="Previous week"><i class="fa-solid fa-chevron-left"></i></button>'+
-                '<button class="btn" onclick="calToday()">This week</button>'+
-                '<button class="btn" onclick="calNext()" aria-label="Next week"><i class="fa-solid fa-chevron-right"></i></button>'+
-                '<span id="cal-week-label" style="color:var(--muted);margin-left:8px;font-size:13px"></span>'+
-            '</div>'+
-            '<div id="calendar-grid" class="cal-grid"></div>'+
-        '</section>';
     const PORTFOLIO_PANEL=
         '<details class="owner-only no-print portfolio-data" '+MARK+'>'+
             '<summary>Portfolio data (not shown publicly)</summary>'+
@@ -100,14 +77,10 @@
     const CV_ADD_SECTIONS=["experience","education","certifications","recommendations","languages"];
 
     function frag(html){ const t=document.createElement("template"); t.innerHTML=html; return t.content; }
-    function mounted(){ return !!document.getElementById("content-0"); }
+    function mounted(){ return !!document.querySelector("["+MARK+"]"); }
 
     function mount(){
         if(mounted()) return;
-        const home=document.getElementById("content-6");
-        home.parentNode.insertBefore(frag(TASKS_SECTION), home.nextSibling);
-        const footer=document.querySelector("main > .site-footer");
-        footer.parentNode.insertBefore(frag(CALENDAR_SECTION), footer);
         document.getElementById("content-1").appendChild(frag(PORTFOLIO_PANEL));
         const sv=document.getElementById("cv-summary-view");
         sv.parentNode.insertBefore(frag(SUMMARY_EDIT), sv.nextSibling);
@@ -122,13 +95,12 @@
         const bh=document.querySelector("#blog-list .head-row");
         if(bh) bh.appendChild(frag(NEW_POST_BTN));
         document.body.appendChild(frag(MODALS));
-        document.getElementById("task-input").addEventListener("keydown", function(e){ if(e.key==="Enter") addTask(); });
     }
     function unmount(){
         const a=document.querySelector(".tab-content.active");
         if(a && a.hasAttribute(MARK)) switchTab(6, {silent:true});
         document.querySelectorAll("["+MARK+"]").forEach(function(el){ el.remove(); });
-        tasks=[]; selectMode=false; selected.clear();
+        selectMode=false; selected.clear();
     }
     function syncBanner(){
         let banner=document.getElementById("owner-banner");
@@ -148,74 +120,6 @@
     function sync(){
         syncBanner();
         if(isOwner) mount(); else if(mounted()) unmount();
-    }
-
-    /* ---- tasks (private) ---- */
-    let tasks=[];
-    async function refreshPrivate(){
-        if(isOwner && !isLocalPreview()){ tasks = await loadDoc("private","tasks",[{id:Date.now(),text:"Welcome back — add a task",dueDate:todayStr(),priority:"medium",completed:false}]); }
-        else if(!isOwner) tasks=[];
-        renderTasks(); renderCalendar();
-    }
-    function renderTasks(){
-        const c=document.getElementById("tasks-container"); if(!c) return;
-        const today=todayStr();
-        const dEl=document.getElementById("today-date"); if(dEl) dEl.textContent=fmtHuman(today);
-        const list=tasks.filter(function(t){ return !t.completed && (!t.dueDate || t.dueDate<=today); });
-        list.sort(function(a,b){
-            const ao=(a.dueDate && a.dueDate<today)?0:1, bo=(b.dueDate && b.dueDate<today)?0:1;
-            if(ao!==bo) return ao-bo;
-            const pr={high:0,medium:1,low:2};
-            return (pr[a.priority]||1)-(pr[b.priority]||1);
-        });
-        if(!list.length){ c.innerHTML='<p class="empty">Nothing left for today. Add a task above.</p>'; return; }
-        c.innerHTML=list.map(function(t){
-            const overdue=(t.dueDate && t.dueDate<today);
-            const dueLine=overdue?('<div class="task-due" style="color:var(--red-bright)">⚠ Overdue — was due '+escapeHtml(t.dueDate)+'</div>')
-                        :(t.dueDate===today?'<div class="task-due">Due today</div>':(t.dueDate?'<div class="task-due">Due '+escapeHtml(t.dueDate)+'</div>':''));
-            return '<div class="task-row">'+
-                '<input type="checkbox" onchange="toggleTask('+t.id+')" title="Mark done and clear from today">'+
-                '<div class="task-main"><div class="task-text">'+escapeHtml(t.text)+'</div>'+dueLine+'</div>'+
-                '<span class="badge badge-'+t.priority+'">'+escapeHtml(t.priority)+'</span>'+
-                '<button class="icon-btn" onclick="deleteTask('+t.id+')" title="Delete permanently"><i class="fa-solid fa-trash-can"></i></button></div>';
-        }).join("");
-    }
-    function addTask(){
-        if(!isOwner) return;
-        const input=document.getElementById("task-input"); const text=input.value.trim(); if(!text){input.focus();return;}
-        tasks.unshift({id:Date.now(),text:text,dueDate:document.getElementById("due-date").value||todayStr(),priority:document.getElementById("priority").value,completed:false});
-        saveDoc("private","tasks",tasks); renderTasks(); renderCalendar();
-        input.value=""; document.getElementById("due-date").value=""; input.focus();
-    }
-    function toggleTask(id){ if(!isOwner) return; const t=tasks.find(function(x){return x.id===id;}); if(t){t.completed=!t.completed; saveDoc("private","tasks",tasks); renderTasks(); renderCalendar();} }
-    function deleteTask(id){ if(!isOwner) return; if(!confirm("Delete this task?"))return; tasks=tasks.filter(function(x){return x.id!==id;}); saveDoc("private","tasks",tasks); renderTasks(); renderCalendar(); }
-
-    /* ---- today / calendar ---- */
-    function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-    function fmtHuman(ds){ try{ return new Date(ds+"T00:00:00").toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"}); }catch(e){ return ds; } }
-    function mondayOf(d){ const x=new Date(d); const off=(x.getDay()+6)%7; x.setDate(x.getDate()-off); x.setHours(0,0,0,0); return x; }
-    function dstr(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-    let calWeekStart=mondayOf(new Date());
-    function calPrev(){ calWeekStart.setDate(calWeekStart.getDate()-7); renderCalendar(); }
-    function calNext(){ calWeekStart.setDate(calWeekStart.getDate()+7); renderCalendar(); }
-    function calToday(){ calWeekStart=mondayOf(new Date()); renderCalendar(); }
-    function renderCalendar(){
-        const grid=document.getElementById("calendar-grid"); if(!grid) return;
-        const today=todayStr(); const start=new Date(calWeekStart); const pr={high:0,medium:1,low:2}; let html="";
-        for(let i=0;i<7;i++){
-            const d=new Date(start); d.setDate(start.getDate()+i); const ds=dstr(d);
-            const dayTasks=tasks.filter(function(t){return t.dueDate===ds;}).sort(function(a,b){ if(a.completed!==b.completed) return a.completed?1:-1; return (pr[a.priority]||1)-(pr[b.priority]||1); });
-            html+='<div class="cal-day'+(ds===today?" cal-today":"")+'">'+
-                '<div class="cal-day-head">'+d.toLocaleDateString(undefined,{weekday:"short"})+' <span>'+d.getDate()+'</span></div>'+
-                (dayTasks.length?dayTasks.map(function(t){
-                    return '<div class="cal-task p-'+t.priority+(t.completed?" done":"")+'" onclick="toggleTask('+t.id+')">'+escapeHtml(t.text)+'</div>';
-                }).join(""):'<div class="cal-empty">—</div>')+
-            '</div>';
-        }
-        grid.innerHTML=html;
-        const label=document.getElementById("cal-week-label");
-        if(label){ const end=new Date(start); end.setDate(start.getDate()+6);
-            label.textContent=start.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" – "+end.toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }
     }
 
     /* ---- portfolio data (collapsed owner panel) ---- */
@@ -470,15 +374,8 @@
     }
     function deletePost(slug){ if(!isOwner)return; if(!confirm("Delete this post?"))return; blog=blog.filter(function(x){return x.slug!==slug;}); saveDoc("public","blog",blog); closePost(); }
 
-    /* ---- nav ---- */
-    function navItems(navBtn){
-        return navBtn(0,"fa-list-check","Today's Tasks","switchTab(0)")+navBtn(5,"fa-calendar-days","Calendar","switchTab(5)");
-    }
-
     /* Inline onclick handlers in the owner markup call these by name. */
     Object.assign(window, {
-        addTask:addTask, toggleTask:toggleTask, deleteTask:deleteTask,
-        calPrev:calPrev, calNext:calNext, calToday:calToday,
         showProjectModal:showProjectModal, hideProjectModal:hideProjectModal, saveProject:saveProject,
         moveProject:moveProject, deleteProject:deleteProject, toggleSelectMode:toggleSelectMode,
         toggleSelect:toggleSelect, selectAllProjects:selectAllProjects, deleteSelectedProjects:deleteSelectedProjects,
@@ -489,8 +386,7 @@
         saveBlogPost:saveBlogPost, deletePost:deletePost
     });
     window.OwnerUI = {
-        sync:sync, refreshPrivate:refreshPrivate, navItems:navItems,
-        renderCalendar:renderCalendar, renderPortfolio:renderOwnerPortfolio,
+        sync:sync, renderPortfolio:renderOwnerPortfolio,
         cardParts:cardParts, cvCtrls:cvCtrls, skillDel:skillDel, postCtrls:postCtrls
     };
 })();
