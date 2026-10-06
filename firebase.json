@@ -2,7 +2,9 @@
   "hosting": {
     "public": ".",
     "predeploy": [
-      "node scripts/check-deploy.js"
+      "node scripts/check-deploy.js",
+      "node scripts/test-public-surface.js",
+      "node scripts/publish-owner-ui.js"
     ],
     "ignore": [
       "firebase.json",
@@ -18,6 +20,7 @@
       "scripts/**",
       "firestore.rules",
       "firestore.indexes.json",
+      "owner-ui.js",
       "**/*.md",
       "package.json",
       "package-lock.json",
@@ -30,7 +33,7 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "!/**/owner-ui.js",
         "destination": "/index.html"
       }
     ]

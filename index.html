@@ -355,7 +355,6 @@
     </div>
 
     <script>
-    const OWNER_UID = "Lm1lDi6wjRfPVbd6SfxfFZfa6RC3";
     const BLOG_TAB = 3;
 
     /* ---- Firebase ---- */
@@ -433,32 +432,58 @@
     /* ---- auth ---- */
     function signIn(){ if(!auth){alert("Sign-in unavailable: Firebase isn't configured yet.");return;} auth.signInWithPopup(provider).catch(function(e){alert("Sign-in failed: "+e.message);}); }
     function signOut(){ if(auth) auth.signOut(); else if(isLocalPreview()) handleAuth(null); }
-    function wantsAdmin(){
-        return new URLSearchParams(location.search).has("admin") || location.hash==="#admin";
-    }
     function localOwnerPreview(){
         /* Localhost only. saveDoc does not run here, so this cannot write to Firestore. */
         return isLocalPreview() && new URLSearchParams(location.search).has("owner");
     }
+    let showSignIn=false;
+    try { if(sessionStorage.getItem("eo-auth")==="1") showSignIn=true; } catch(e){}
     function renderAuthUI(){
         const box=document.getElementById("auth-box");
+        if(!box) return;
         if(currentUser) box.innerHTML='<div style="color:var(--text)">'+escapeHtml(currentUser.email||"signed in")+'</div><button onclick="signOut()">sign out</button>';
-        else if(wantsAdmin()) box.innerHTML='<button onclick="signIn()"><i class="fa-brands fa-google"></i> sign in</button>';
+        else if(showSignIn) box.innerHTML='<button onclick="signIn()"><i class="fa-brands fa-google"></i> sign in</button>';
         else box.textContent="";
         updateSideFoot();
     }
-    /* Owner tools (markup and editing code) live in /owner-ui.js. It is only
-       requested once someone is signed in, so visitors never download it and
-       the served HTML carries no owner markup. */
-    let ownerUiLoading=null;
-    function loadOwnerUI(){
-        if(window.OwnerUI) return Promise.resolve();
-        if(!ownerUiLoading) ownerUiLoading=loadScript("/owner-ui.js").catch(function(e){ ownerUiLoading=null; throw e; });
-        return ownerUiLoading;
+    document.addEventListener("keydown", function(e){
+        if(isLocalPreview()) return;
+        const t=e.target;
+        if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.isContentEditable)) return;
+        if(!e.altKey || !e.shiftKey || e.ctrlKey || e.metaKey || e.repeat) return;
+        if(e.code!=="KeyE") return;
+        showSignIn=true;
+        try { sessionStorage.setItem("eo-auth","1"); } catch(err){}
+        renderAuthUI();
+    });
+    /* Editing tools are not shipped as a public file. After sign-in the page
+       reads private/ownerUi. Rules allow that read only for the owner; the
+       source from that document is what mounts the editors. */
+    async function loadOwnerTools(){
+        if(window.OwnerUI) return true;
+        let snap;
+        try { snap=await withTimeout(db.collection("private").doc("ownerUi").get(), 8000); }
+        catch(e){ return false; }
+        if(!snap.exists) return false;
+        const data=snap.data()||{};
+        const source=data.source;
+        if(typeof source!=="string" || source.indexOf("window.OwnerUI")<0) return false;
+        const blob=new Blob([source],{type:"text/javascript"});
+        const url=URL.createObjectURL(blob);
+        try { await loadScript(url); }
+        finally { URL.revokeObjectURL(url); }
+        return !!window.OwnerUI;
     }
     async function handleAuth(user){
-        currentUser=user; isOwner=!!(user && user.uid===OWNER_UID);
-        if(currentUser){ try { await loadOwnerUI(); } catch(e){ console.warn("Owner tools not loaded:", e.message); } }
+        currentUser=user;
+        isOwner=false;
+        if(user && user.localOwner){
+            try { await loadScript("/owner-ui.js"); isOwner=!!window.OwnerUI; }
+            catch(e){ console.warn("Owner tools not loaded:", e.message); }
+        } else if(user && firebaseReady && db){
+            try { isOwner=await loadOwnerTools(); }
+            catch(e){ console.warn("Owner tools not loaded:", e.message); isOwner=false; }
+        }
         if(window.OwnerUI) OwnerUI.sync();
         renderAuthUI(); renderNav(); applyMode();
         renderPortfolio(); renderCv();
@@ -475,7 +500,7 @@
     function settleInitialView(){
         if(firstAuth){
             firstAuth=false;
-            if(!hashIsSection() && location.hash!=="#admin") switchTab(6, {silent:true});
+            if(!hashIsSection()) switchTab(6, {silent:true});
         }
         else { const a=document.querySelector(".tab-content.active"); if(!a && !isOwner) switchTab(6, {silent:true}); }
     }
@@ -523,7 +548,6 @@
     function goWriting(){ blogFilter="all"; switchTab(BLOG_TAB, {forceList:true}); }
     function route(ev){
         const h=location.hash;
-        if(h==="#admin"){ renderAuthUI(); return; }
         if(h==="" || h==="#home"){
             if(h==="#home" || (ev && (ev.type==="popstate" || ev.type==="hashchange"))) switchTab(6, {silent:true});
             return;
@@ -881,7 +905,7 @@ function sortCvEntries(entries, dateField) {
             else await bootFirebase();
             renderNav(); applyMode();
             await loadPublic();
-            if(localOwnerPreview()) handleAuth({uid:OWNER_UID, email:"local preview"});
+            if(localOwnerPreview()) handleAuth({email:"local preview", localOwner:true});
             else if(firebaseReady && auth) auth.onAuthStateChanged(handleAuth);
             else handleAuth(null);
         } finally {

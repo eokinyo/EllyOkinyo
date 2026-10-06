@@ -39,6 +39,9 @@ const server = http.createServer(function (req, res) {
     send(res, 400, "text/plain; charset=utf-8", "Bad path");
     return;
   }
+  /* Production hosting does not upload this file (it 404s). Local preview
+     still needs it for the localhost ?owner editing session. */
+  if (rel === "/owner-ui.js") rel = "/scripts/owner-ui.js";
   const filePath = path.join(root, rel);
   fs.stat(filePath, function (err, st) {
     let file = filePath;
