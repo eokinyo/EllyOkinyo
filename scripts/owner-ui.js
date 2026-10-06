@@ -1,24 +1,12 @@
 /* Owner tools for ellyokinyo.com.
-   index.html loads this file only after Firebase Auth reports a signed-in
-   user (or the localhost ?owner preview). Visitors never request it, and
-   none of this markup is in the served HTML. Owner panels are created only
-   when the signed-in account is the owner (isOwner, checked in index.html).
+   Not deployed as a static file. Hosting publish writes this source into
+   the private Firestore document private/ownerUi, which firestore.rules
+   allow only the owner to read. index.html runs it after that read succeeds.
+   Local preview (localhost ?owner) loads it from the preview server instead.
    Writes still go through saveDoc, so firestore.rules stay the real guard. */
 (function(){
     "use strict";
     const MARK="data-owner-ui";
-
-    /* ---- styles that only the owner tools use ---- */
-    (function injectStyle(){
-        if(document.getElementById("owner-ui-style")) return;
-        const st=document.createElement("style");
-        st.id="owner-ui-style";
-        st.textContent=
-            "#owner-banner{background:rgba(250,189,47,.1);border-bottom:1px solid rgba(250,189,47,.4);color:var(--cream);font-size:13px;padding:12px 18px}"+
-            "#owner-banner code{font-family:inherit;background:rgba(250,189,47,.18);padding:1px 6px;border-radius:4px;color:var(--yellow);user-select:all}"+
-            "@media print{#owner-banner{display:none!important}}";
-        document.head.appendChild(st);
-    })();
 
     /* ---- markup ---- */
     const PORTFOLIO_PANEL=
@@ -102,23 +90,10 @@
         document.querySelectorAll("["+MARK+"]").forEach(function(el){ el.remove(); });
         selectMode=false; selected.clear();
     }
-    function syncBanner(){
-        let banner=document.getElementById("owner-banner");
-        if(currentUser && !isOwner){
-            if(!banner){
-                banner=document.createElement("div");
-                banner.id="owner-banner";
-                banner.appendChild(document.createTextNode("Signed in, but this account isn't the owner yet. Your user ID: "));
-                const code=document.createElement("code"); code.id="uid-value"; banner.appendChild(code);
-                banner.appendChild(frag(' — paste it into <code>OWNER_UID</code> and your Firestore rules, then redeploy.'));
-                document.body.insertBefore(banner, document.body.firstChild);
-            }
-            document.getElementById("uid-value").textContent=currentUser.uid;
-        } else if(banner) banner.remove();
-    }
-    /* Called by index.html on every auth change once this file is loaded. */
+    /* Called by index.html on every auth change once this file is loaded.
+       The page only loads this file for the owner, so there is no signed-in
+       non-owner banner here. */
     function sync(){
-        syncBanner();
         if(isOwner) mount(); else if(mounted()) unmount();
     }
 
