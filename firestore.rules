@@ -14,5 +14,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null
                          && request.auth.uid == "Lm1lDi6wjRfPVbd6SfxfFZfa6RC3";
     }
+
+    // SANA PÄIVÄSSÄ (sana-paivassa.web.app): each signed-in user reads/writes only their own progress doc
+    match /sanaPaivassa/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+                            && request.resource.data.keys().hasOnly(['v', 'progress', 'scores', 'sana', 'sanaStats', 'drillStats', 'missed', 'settings', 'updatedAt'])
+                            && request.resource.data.v is int
+                            && (!('missed' in request.resource.data) || (request.resource.data.missed is list && request.resource.data.missed.size() <= 300));
+    }
   }
 }

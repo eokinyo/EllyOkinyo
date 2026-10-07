@@ -1,0 +1,2 @@
+# Keep firestore.rules byte-identical to the deployed rules (LF), even with core.autocrlf=true
+firestore.rules text eol=lf
