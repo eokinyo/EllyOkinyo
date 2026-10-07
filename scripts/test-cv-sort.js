@@ -160,17 +160,16 @@ check("fixture array was not rewritten", expBefore.join("\n") === cv.experience.
 var eduView = sortCvEntries(cv.education, "period");
 check("fixture education stays in order", eduView.map(function (r) { return r.item.degree; }).join(" | ") === [
   "Research Master's in Economics",
-  "BBA in Computer Applications",
   "BBSc in Financial Economics"
 ].join(" | "));
-check("fixture education indexes", eduView.map(function (r) { return r.index; }).join(",") === "0,1,2");
+check("fixture education indexes", eduView.map(function (r) { return r.index; }).join(",") === "0,1");
 
 var certView = sortCvEntries(cv.certifications, "date");
 check("fixture certifications newest first", certView.map(function (r) { return r.item.name + " | " + r.item.date; }).join("\n") === [
   "Python Essentials 1 | Jan 2024",
   "Data Analytics Essentials | Jan 2024",
   "Introduction to Data Science | Dec 2023",
-  "Impact Evaluation Training for Researchers in East Africa | Mar 2023"
+  "Impact Evaluation Training for Researchers in East Africa | Mar 2022"
 ].join("\n"));
 check("fixture certification indexes", certView.map(function (r) { return r.index; }).join(",") === "1,2,3,0");
 
