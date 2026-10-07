@@ -52,11 +52,6 @@ window.MOCK_DATA = {
       "school": "University of Helsinki, Finland"
     },
     {
-      "degree": "BBA in Computer Applications",
-      "school": "Häme University of Applied Sciences, Finland",
-      "period": "Aug 2023 – May 2024"
-    },
-    {
       "degree": "BBSc in Financial Economics",
       "period": "Jul 2016 – Dec 2020",
       "school": "Strathmore University, Nairobi"
@@ -99,7 +94,7 @@ window.MOCK_DATA = {
     {
       "issuer": "NIERA",
       "name": "Impact Evaluation Training for Researchers in East Africa",
-      "date": "Mar 2023"
+      "date": "Mar 2022"
     },
     {
       "issuer": "Cisco Networking Academy & Python Institute",
