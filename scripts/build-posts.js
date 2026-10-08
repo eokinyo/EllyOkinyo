@@ -166,7 +166,7 @@ ${markdownToHtml(post.body || "")}
 </main>
 <footer>
   <a href="https://ellyokinyo.com/#writing">All writing</a>
-  <p class="privacy">No cookies, no analytics. Read counts are one anonymous number per article: counting stores nothing on your device and saves no personal data.</p>
+  <p class="privacy">Visit counts are anonymised and no personal data is stored.</p>
 </footer>
 <script src="/counter.js" data-slug="${escapeHtml(slug)}" defer></script>
 </body>
