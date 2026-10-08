@@ -40,3 +40,11 @@ curl -sI https://ellyokinyo.com/scripts/owner-ui.js
 ```
 
 The first command should print `clean`. `/owner-ui.js` and `/scripts/owner-ui.js` should be `404`, and the body of `/owner-ui.js` should print `clean`. Local preview (`node scripts/preview-server.js`, then `http://127.0.0.1:4173/?owner`) still loads the editing tools. That server is not the live site.
+
+## Read counts and no analytics
+
+The site is cookieless and runs no analytics. `node scripts/test-public-surface.js` (a predeploy step) stops the deploy if an uploaded file contains `googletagmanager`, `gtag(`, `google-analytics`, `firebase-analytics` or `getAnalytics(`.
+
+`counter.js` counts article reads in the Firestore document `counters/site` (`total` plus one field per article slug). It counts after 15 seconds visible, skips reloads, back/forward visits and obvious bots, and stores nothing on the device. Counts show only from 50 reads per article and 500 for the site total. The `counters` block in `firestore.rules` lets visitors add only +1 to `total` and one existing article field, at most once every 6 seconds; concurrent reads inside that gap are retried once and otherwise dropped.
+
+New article page: copy an existing page in `writing/`, keep the footer privacy line and set `<script src="/counter.js" data-slug="<slug>" defer></script>` to the new slug. `node scripts/add-article.js <post.json> --write` also creates the slug's counter field at 0 (never resets an existing count). `--counter-only` does just the counter field.

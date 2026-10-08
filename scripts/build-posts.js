@@ -149,6 +149,8 @@ function pageHtml(post) {
   .prose { font-size: 1.05rem; }
   .prose p { margin: 0.85em 0; }
   footer { color: #948676; font-size: 0.95rem; border-top: 1px solid rgba(204,36,29,.55); }
+  footer .privacy { font-size: 0.8rem; }
+  .reads { color: #948676; font-size: 0.85rem; margin: -0.6rem 0 1rem; }
 </style>
 </head>
 <body>
@@ -164,7 +166,9 @@ ${markdownToHtml(post.body || "")}
 </main>
 <footer>
   <a href="https://ellyokinyo.com/#writing">All writing</a>
+  <p class="privacy">No cookies, no analytics. Read counts are one anonymous number per article: counting stores nothing on your device and saves no personal data.</p>
 </footer>
+<script src="/counter.js" data-slug="${escapeHtml(slug)}" defer></script>
 </body>
 </html>
 `;

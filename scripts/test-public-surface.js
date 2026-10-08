@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Fail when a file Firebase Hosting would upload contains owner-tool copy,
-   or when /owner-ui.js would be part of that upload.
+   or analytics/tracking code, or when /owner-ui.js would be part of that upload.
    No dependencies. Also run by hosting predeploy. */
 const fs = require("fs");
 const path = require("path");
@@ -26,6 +26,16 @@ const OWNER_MARKUP = [
   "Portfolio data (not shown publicly)",
   "owner-banner",
   "paste it into"
+];
+
+/* The site is cookieless and runs no analytics (removed 8 Oct 2026).
+   Any of these in an uploaded file stops the deploy. */
+const ANALYTICS = [
+  "googletagmanager",
+  "gtag(",
+  "google-analytics",
+  "firebase-analytics",
+  "getAnalytics("
 ];
 
 const TEXT_EXT = {
@@ -141,7 +151,8 @@ function main() {
     "robots.txt": false,
     "sitemap.xml": false,
     "favicon.svg": false,
-    "config.js": false
+    "config.js": false,
+    "counter.js": false
   };
   Object.keys(samples).forEach(function (rel) {
     const got = isIgnored(rel, patterns);
@@ -181,6 +192,8 @@ function main() {
     const text = fs.readFileSync(path.join(root, rel), "utf8");
     const hit = findHit(text, CHROME.concat(OWNER_MARKUP));
     if (hit) problems.push(rel + " contains " + JSON.stringify(hit));
+    const tracker = findHit(text, ANALYTICS);
+    if (tracker) problems.push(rel + " contains analytics code " + JSON.stringify(tracker) + " (the site is cookieless; remove it)");
   });
 
   if (problems.length) {

@@ -15,6 +15,79 @@ service cloud.firestore {
                          && request.auth.uid == "Lm1lDi6wjRfPVbd6SfxfFZfa6RC3";
     }
 
+    // READ COUNTERS (ellyokinyo.com, counter.js): anyone reads. A visitor can only
+    // add exactly +1 to `total` and to ONE existing article field, setting lastWrite
+    // to the server time, at most once every 6 seconds (caps visitor writes at
+    // 14,400 a day, under the 20,000 free writes shared with the rest of the
+    // project). No create, delete or new fields from visitors; only you.
+    match /counters/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == "Lm1lDi6wjRfPVbd6SfxfFZfa6RC3";
+      allow update: if visitorRead();
+
+      // Rules cannot loop. The keys of the existing doc are checked in blocks of 8:
+      // a block is skipped in one step unless it holds the changed article key, and
+      // inside that block the key must have gone up by exactly 1. Up to 128 keys
+      // (126 articles); past that, visitor writes are refused until a block is added.
+      function step(ks, art, i) {
+        return ks.size() <= i
+            || !(ks[i] in art)
+            || (request.resource.data[ks[i]] is int
+                && resource.data[ks[i]] is int
+                && request.resource.data[ks[i]] == resource.data[ks[i]] + 1);
+      }
+      function steps8(ks, art, b) {
+        return step(ks, art, b)
+            && step(ks, art, b + 1)
+            && step(ks, art, b + 2)
+            && step(ks, art, b + 3)
+            && step(ks, art, b + 4)
+            && step(ks, art, b + 5)
+            && step(ks, art, b + 6)
+            && step(ks, art, b + 7);
+      }
+      function block(ks, art, n, b) {
+        return !art.hasAny(n >= b + 8 ? ks[b:b + 8] : ks[b:n]) || steps8(ks, art, b);
+      }
+      function articleOk(ks, art) {
+        let n = ks.size();
+        return n <= 128
+            && (n <= 0 || block(ks, art, n, 0))
+            && (n <= 8 || block(ks, art, n, 8))
+            && (n <= 16 || block(ks, art, n, 16))
+            && (n <= 24 || block(ks, art, n, 24))
+            && (n <= 32 || block(ks, art, n, 32))
+            && (n <= 40 || block(ks, art, n, 40))
+            && (n <= 48 || block(ks, art, n, 48))
+            && (n <= 56 || block(ks, art, n, 56))
+            && (n <= 64 || block(ks, art, n, 64))
+            && (n <= 72 || block(ks, art, n, 72))
+            && (n <= 80 || block(ks, art, n, 80))
+            && (n <= 88 || block(ks, art, n, 88))
+            && (n <= 96 || block(ks, art, n, 96))
+            && (n <= 104 || block(ks, art, n, 104))
+            && (n <= 112 || block(ks, art, n, 112))
+            && (n <= 120 || block(ks, art, n, 120));
+      }
+      function visitorRead() {
+        let d = request.resource.data.diff(resource.data);
+        let ch = d.changedKeys();
+        let art = ch.difference(['total', 'lastWrite'].toSet());
+        return d.addedKeys().size() == 0
+            && d.removedKeys().size() == 0
+            && ch.size() == 3
+            && ch.hasAll(['total', 'lastWrite'])
+            && request.resource.data.total is int
+            && resource.data.total is int
+            && request.resource.data.total == resource.data.total + 1
+            && request.resource.data.lastWrite == request.time
+            && resource.data.lastWrite is timestamp
+            && request.time >= resource.data.lastWrite + duration.value(6, 's')
+            && articleOk(resource.data.keys(), art);
+      }
+    }
+
     // SANA PÄIVÄSSÄ (sana-paivassa.web.app): each signed-in user reads/writes only their own progress doc
     match /sanaPaivassa/{uid} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;

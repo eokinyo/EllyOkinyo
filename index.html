@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Google Analytics (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-SR3V58QDH7"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-SR3V58QDH7');
-</script>
 <title>Elly Okinyo — Economist & Data Analyst, Helsinki</title>
 <meta name="description" content="Economist and data analyst in Helsinki working on time series, labour markets and remittances. Research Master's in Economics, University of Helsinki.">
 <link rel="canonical" href="https://ellyokinyo.com/">
@@ -53,6 +45,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 <!-- Markdown renderer for the blog -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="/counter.js" defer></script>
 
 <style>
     :root{
@@ -179,6 +172,8 @@
     .socials{display:flex;gap:14px;justify-content:center;margin-top:12px}
     .socials a{width:42px;height:42px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;color:var(--cream);font-size:16px}
     .socials a:hover{border-color:var(--orange);color:var(--orange)}
+    .privacy-note{margin:16px auto 0;max-width:560px;font-size:12px} .site-reads{margin-top:10px;font-size:12px}
+    .reads-badge{font-size:12px;color:var(--muted)} .post-reads{font-size:12px;color:var(--muted);margin:-14px 0 22px}
 
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
     .overlay.hidden{display:none}
@@ -350,6 +345,7 @@
                     <a href="https://x.com/e_okinyo" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
                     <a href="mailto:elly.okinyo@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
                 </div>
+                <div class="privacy-note">No cookies, no analytics. Read counts are one anonymous number per article: counting stores nothing on your device and saves no personal data.</div>
             </footer>
         </main>
     </div>
@@ -484,6 +480,7 @@
             try { isOwner=await loadOwnerTools(); }
             catch(e){ console.warn("Owner tools not loaded:", e.message); isOwner=false; }
         }
+        if(isOwner && window.EOCounter) EOCounter.cancel(); /* your own reads are not counted */
         if(window.OwnerUI) OwnerUI.sync();
         renderAuthUI(); renderNav(); applyMode();
         renderPortfolio(); renderCv();
@@ -522,6 +519,7 @@
     }
     function switchTab(n, opts){
         opts=opts||{};
+        if(n!==BLOG_TAB && window.EOCounter) EOCounter.cancel();
         document.querySelectorAll(".tab-content").forEach(function(el){el.classList.remove("active");});
         const c=document.getElementById("content-"+n); if(c) c.classList.add("active");
         document.querySelectorAll("#nav-container .nav-item").forEach(function(el){el.classList.remove("active");});
@@ -801,6 +799,23 @@ function sortCvEntries(entries, dateField) {
     function categoryLabel(c){ return c==="notes" ? "Notes from Helsinki" : "Economics"; }
     function excerpt(md){ const t=String(md||"").replace(/[#*_`>\[\]()!-]/g," ").replace(/\s+/g," ").trim(); return t.length>140?t.slice(0,140)+"…":t; }
     function renderBlogView(){ const m=location.hash.match(/^#post\/(.+)$/); if(m) showBlogPost(decodeURIComponent(m[1])); else showBlogList(); }
+    /* ---- read counts (counter.js): shown only at or above the thresholds there ---- */
+    const INITIAL_POST=(function(){ const m=location.hash.match(/^#post\/(.+)$/); try { return m?decodeURIComponent(m[1]):null; } catch(e){ return null; } })();
+    let readCounts=null;
+    function readsBadge(slug){ const t=window.EOCounter?EOCounter.articleLabel(readCounts, slug):""; return t?'<span class="reads-badge">'+escapeHtml(t)+'</span>':""; }
+    function postReadsLine(slug){ const t=window.EOCounter?EOCounter.articleLabel(readCounts, slug):""; return t?'<div class="post-reads" id="post-reads">'+escapeHtml(t)+'</div>':""; }
+    function applyReadCounts(){
+        const site=window.EOCounter?EOCounter.siteLabel(readCounts):"";
+        const foot=document.querySelector(".site-footer");
+        if(site && foot && !foot.querySelector(".site-reads")){ const d=document.createElement("div"); d.className="site-reads"; d.textContent=site; foot.appendChild(d); }
+        if(!document.getElementById("blog-list").classList.contains("hidden")) showBlogList();
+        const meta=document.getElementById("post-meta");
+        const m=location.hash.match(/^#post\/(.+)$/);
+        if(meta && m && !document.getElementById("post-reads") && !document.getElementById("blog-post").classList.contains("hidden")){
+            let slug=""; try { slug=decodeURIComponent(m[1]); } catch(e){}
+            const html=postReadsLine(slug); if(html) meta.insertAdjacentHTML("afterend", html);
+        }
+    }
     function setBlogFilter(f){
         blogFilter=(f==="notes"||f==="economics")?f:"all";
         const hash=blogFilter==="all"?"#writing":"#writing/"+blogFilter;
@@ -808,6 +823,7 @@ function sortCvEntries(entries, dateField) {
         showBlogList();
     }
     function showBlogList(){
+        if(window.EOCounter) EOCounter.cancel();
         document.getElementById("blog-post").classList.add("hidden");
         document.getElementById("blog-list").classList.remove("hidden");
         document.querySelectorAll("#blog-chips .nav-item").forEach(function(btn){
@@ -829,7 +845,7 @@ function sortCvEntries(entries, dateField) {
                 '<div class="card-head"><div class="card-title">'+escapeHtml(p.title)+'</div>'+badge+'</div>'+
                 '<div class="exp-period" style="margin-top:4px">'+escapeHtml(p.date||"")+'</div>'+
                 '<p class="card-desc">'+escapeHtml(excerpt(p.body))+'</p>'+
-                '<div class="card-foot"><span class="g">Read →</span></div></div>';
+                '<div class="card-foot"><span class="g">Read →</span>'+readsBadge(p.slug)+'</div></div>';
         }).join("");
     }
     function renderLatestWriting(){
@@ -858,9 +874,11 @@ function sortCvEntries(entries, dateField) {
         const cat=postCategory(p);
         const owner=(isOwner && window.OwnerUI)?OwnerUI.postCtrls(p.slug):"";
         pc.innerHTML='<h2 class="title" style="margin-bottom:4px">'+escapeHtml(p.title)+'</h2>'+
-            '<div class="exp-period" style="margin-bottom:22px"><span class="badge-status'+(cat==="notes"?" badge-notes":"")+'">'+escapeHtml(categoryLabel(cat))+'</span> '+escapeHtml(p.date||"")+'</div>'+
+            '<div class="exp-period" id="post-meta" style="margin-bottom:22px"><span class="badge-status'+(cat==="notes"?" badge-notes":"")+'">'+escapeHtml(categoryLabel(cat))+'</span> '+escapeHtml(p.date||"")+'</div>'+
+            postReadsLine(p.slug)+
             '<div class="prose">'+mdToHtml(p.body)+'</div>'+owner;
         window.scrollTo(0,0);
+        if(window.EOCounter && !isLocalPreview() && !isOwner) EOCounter.track(p.slug, {pageLoad: p.slug===INITIAL_POST});
     }
     /* ---- contact ---- */
     function sendMail(){
@@ -898,6 +916,7 @@ function sortCvEntries(entries, dateField) {
         renderCv();
         renderLatestWriting();
         route();
+        if(!isLocalPreview() && window.EOCounter) EOCounter.getCounts().then(function(c){ readCounts=c; applyReadCounts(); });
     }
     window.onload = async function(){
         try {
