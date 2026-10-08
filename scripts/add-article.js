@@ -6,12 +6,17 @@
    This script inserts the post from a JSON file, or replaces the post
    that already has the same slug. Every other post is left untouched.
 
+   It also makes sure the read counter document counters/site has a field
+   for this slug (created at 0 only when it is missing; an existing count is
+   never reset). --counter-only does just that and leaves public/blog alone.
+
    Dry run by default: prints what would change and writes nothing.
 
      npm install --no-save firebase-admin
      gcloud auth application-default login      # or set GOOGLE_APPLICATION_CREDENTIALS
      node scripts/add-article.js scripts/articles/kenya-remittances-2026.json
      node scripts/add-article.js scripts/articles/kenya-remittances-2026.json --write
+     node scripts/add-article.js scripts/articles/kenya-remittances-2026.json --counter-only --write
 
    Deploy hosting first (firebase deploy --only hosting) so the chart
    images the post links to already exist on ellyokinyo.com.
@@ -23,6 +28,7 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const args = process.argv.slice(2);
 const write = args.includes("--write");
+const counterOnly = args.includes("--counter-only");
 const file = args.find(function (a) { return !a.startsWith("--"); });
 
 function projectId() {
@@ -43,6 +49,7 @@ function validate(post) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(post.date || ""))) problems.push("date must be YYYY-MM-DD");
   if (!String(post.body || "").trim()) problems.push("body is empty");
   if (typeof post.id !== "number") problems.push("id must be a number");
+  if (post.slug === "total" || post.slug === "lastWrite") problems.push('slug cannot be "total" or "lastWrite" (reserved in counters/site)');
   return problems;
 }
 
@@ -70,6 +77,31 @@ async function main() {
   const db = admin.firestore();
   const ref = db.collection("public").doc("blog");
 
+  /* Read counter field: create at 0 only if missing. Never resets a count. */
+  const counterRef = db.collection("counters").doc("site");
+  const counter = await db.runTransaction(async function (tx) {
+    const snap = await tx.get(counterRef);
+    const data = snap.exists ? snap.data() : null;
+    if (data && Object.prototype.hasOwnProperty.call(data, post.slug)) {
+      return { action: "field exists (" + data[post.slug] + "), left unchanged" };
+    }
+    if (!data) {
+      const init = { total: 0, lastWrite: admin.firestore.Timestamp.fromMillis(0) };
+      init[post.slug] = 0;
+      if (write) tx.create(counterRef, init);
+      return { action: "create counters/site with total 0 and " + post.slug + " 0" };
+    }
+    if (write) tx.update(counterRef, new admin.firestore.FieldPath(post.slug), 0);
+    return { action: "add field " + post.slug + " = 0" };
+  });
+
+  if (counterOnly) {
+    console.log("Project:  " + pid);
+    console.log("Counter:  counters/site · " + counter.action);
+    console.log(write ? "Written." : "Dry run. Nothing was written. Add --write to apply.");
+    return;
+  }
+
   const result = await db.runTransaction(async function (tx) {
     const snap = await tx.get(ref);
     const current = snap.exists && Array.isArray(snap.data().value) ? snap.data().value : [];
@@ -85,6 +117,7 @@ async function main() {
   console.log("Post:     " + post.slug + " · " + post.category + " · " + post.date);
   console.log("Action:   " + (result.replaced ? "replace existing post with this slug" : "add new post at the top"));
   console.log("Posts:    " + result.before + " -> " + result.after);
+  console.log("Counter:  counters/site · " + counter.action);
   if (!write) {
     console.log("Dry run. Nothing was written. Add --write to apply.");
   } else {
