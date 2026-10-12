@@ -15,4 +15,4 @@ See [DEPLOY.md](DEPLOY.md). Site configuration and private files are not in this
 
 ## Licence
 
-No licence is granted. The site's text, images and design are © Elly Okinyo, all rights reserved.
+Code (HTML, CSS, JavaScript and scripts) is released under the MIT License, see [LICENSE](LICENSE). Article text in `writing/` is licensed under CC BY 4.0, see [LICENSE-CC-BY-4.0](LICENSE-CC-BY-4.0). Photos and other images are not covered by either licence; all rights reserved.
