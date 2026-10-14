@@ -473,10 +473,7 @@
     async function handleAuth(user){
         currentUser=user;
         isOwner=false;
-        if(user && user.localOwner){
-            try { await loadScript("/owner-ui.js"); isOwner=!!window.OwnerUI; }
-            catch(e){ console.warn("Owner tools not loaded:", e.message); }
-        } else if(user && firebaseReady && db){
+        if(user && firebaseReady && db){
             try { isOwner=await loadOwnerTools(); }
             catch(e){ console.warn("Owner tools not loaded:", e.message); isOwner=false; }
         }
