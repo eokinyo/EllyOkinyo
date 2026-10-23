@@ -168,6 +168,7 @@ ${markdownToHtml(post.body || "")}
   <a href="https://ellyokinyo.com/#writing">All writing</a>
   <p class="privacy">Visit counts are anonymised and no personal data is stored.</p>
 </footer>
+<script src="/share.js" defer></script>
 <script src="/counter.js" data-slug="${escapeHtml(slug)}" defer></script>
 </body>
 </html>

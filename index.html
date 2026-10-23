@@ -46,6 +46,8 @@
 <!-- Markdown renderer for the blog -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="/counter.js" defer></script>
+<!-- "Share this article" block for Writing posts (no third-party code) -->
+<script src="/share.js" data-auto="off" defer></script>
 
 <style>
     :root{
@@ -856,6 +858,12 @@ function sortCvEntries(entries, dateField) {
             '<p class="card-desc">'+escapeHtml(excerpt(p.body))+'</p>'+
             '<div class="card-foot"><button class="btn" onclick="openPost(\''+p.slug+'\')">Read</button></div>';
     }
+    /* Link used by the share block: the post's own https://ellyokinyo.com page if the post has a `url`, otherwise its #post/ link. */
+    function postShareUrl(p){
+        const u=String((p&&p.url)||"");
+        if(/^https:\/\/(www\.)?ellyokinyo\.com\//.test(u)) return u;
+        return "https://ellyokinyo.com/#post/"+encodeURIComponent(p.slug);
+    }
     function openPost(slug){ location.hash="post/"+encodeURIComponent(slug); }
     function closePost(){
         const hash=(blogFilter&&blogFilter!=="all")?"#writing/"+blogFilter:"#writing";
@@ -873,7 +881,9 @@ function sortCvEntries(entries, dateField) {
         pc.innerHTML='<h2 class="title" style="margin-bottom:4px">'+escapeHtml(p.title)+'</h2>'+
             '<div class="exp-period" id="post-meta" style="margin-bottom:22px"><span class="badge-status'+(cat==="notes"?" badge-notes":"")+'">'+escapeHtml(categoryLabel(cat))+'</span> '+escapeHtml(p.date||"")+'</div>'+
             postReadsLine(p.slug)+
-            '<div class="prose">'+mdToHtml(p.body)+'</div>'+owner;
+            '<div class="prose">'+mdToHtml(p.body)+'</div>'+
+            '<div id="post-share" class="no-print"></div>'+owner;
+        if(window.EOShare) EOShare.render(document.getElementById("post-share"), {url: postShareUrl(p), title: p.title});
         window.scrollTo(0,0);
         if(window.EOCounter && !isLocalPreview() && !isOwner) EOCounter.track(p.slug, {pageLoad: p.slug===INITIAL_POST});
     }
