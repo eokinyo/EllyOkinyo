@@ -168,11 +168,11 @@
     .prose pre code{background:none;padding:0;color:var(--text)}
     .prose blockquote{border-left:3px solid var(--red);margin:.8em 0;padding-left:14px;color:var(--muted)}
     .prose img{max-width:100%;border-radius:10px} .prose hr{border:none;border-top:1px solid var(--line);margin:1.4em 0}
-    .prose table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;margin:1.2em 0;font-size:14px;line-height:1.5}
-    .prose th,.prose td{border:1px solid var(--line);padding:8px 12px;text-align:left;vertical-align:top}
-    .prose thead th{background:var(--bg-soft);color:var(--cream);font-weight:700}
-    .prose tbody tr:nth-child(even) td{background:rgba(235,219,178,.04)}
-    .prose th:first-child,.prose td:first-child{min-width:14em}
+    .prose table{width:100%;border-collapse:collapse;margin:1.2em 0;font-family:inherit;font-size:14px;line-height:1.5;table-layout:fixed}
+    .prose th,.prose td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);overflow-wrap:break-word}
+    .prose thead th{font-weight:700;color:var(--cream);border-bottom:2px solid var(--muted)}
+    .prose th:first-child,.prose td:first-child{width:44%}
+    @media (max-width:600px){.prose table{font-size:13px}.prose th,.prose td{padding:10px 8px}.prose th:first-child,.prose td:first-child{width:40%}}
 
     /* footer */
     .site-footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0;text-align:center;color:var(--muted);font-size:13px}
