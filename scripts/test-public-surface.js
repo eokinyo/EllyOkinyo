@@ -28,6 +28,15 @@ const OWNER_MARKUP = [
   "paste it into"
 ];
 
+/* No email address in served files (removed 29 Oct 2026; visitors use the
+   contact form instead). Written as patterns so this file does not hold the
+   address itself: any "mailto:" followed by an address, and any gmail.com or
+   googlemail.com address. share.js builds a "mailto:?subject=..." link with no
+   address; that is allowed. */
+const MAILTO_WITH_ADDRESS = /mailto:\s*[^?\s"'<>]*@/i;
+const GMAIL_ADDRESS = /[A-Za-z0-9._%+-]+@(?:gmail|googlemail)\.com/i;
+const OBFUSCATED_ADDRESS = /[A-Za-z0-9._-]+(?:&#0*64;|&#x0*40;|&commat;)[A-Za-z0-9.-]+\.[a-z]{2,}/i;
+
 /* The site is cookieless and runs no analytics (removed 8 Oct 2026).
    Any of these in an uploaded file stops the deploy. */
 const ANALYTICS = [
@@ -192,6 +201,9 @@ function main() {
     const text = fs.readFileSync(path.join(root, rel), "utf8");
     const hit = findHit(text, CHROME.concat(OWNER_MARKUP));
     if (hit) problems.push(rel + " contains " + JSON.stringify(hit));
+    if (MAILTO_WITH_ADDRESS.test(text)) problems.push(rel + " contains a mailto: link with an address (use the contact form)");
+    if (GMAIL_ADDRESS.test(text)) problems.push(rel + " contains a gmail.com address");
+    if (OBFUSCATED_ADDRESS.test(text)) problems.push(rel + " contains an obfuscated email address");
     const tracker = findHit(text, ANALYTICS);
     if (tracker) problems.push(rel + " contains analytics code " + JSON.stringify(tracker) + " (the site is cookieless; remove it)");
   });

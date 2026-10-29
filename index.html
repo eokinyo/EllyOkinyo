@@ -46,6 +46,8 @@
 <!-- Markdown renderer for the blog -->
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="/counter.js" defer></script>
+<!-- Contact form: writes to Firestore contactMessages, no email address on the page -->
+<script src="/contact.js" defer></script>
 <!-- "Share this article" block for Writing posts (no third-party code) -->
 <script src="/share.js" data-auto="off" defer></script>
 
@@ -132,7 +134,21 @@
     .portfolio-data summary{cursor:pointer;color:var(--muted);font-size:14px}
     .portfolio-data .owner-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}
     .portfolio-data .draft-note{margin:14px 0}
-    .contact-email{color:var(--cream)}
+    .contact-form{display:grid;gap:16px}
+    .contact-field label{display:block;margin-bottom:6px;color:var(--cream);font-size:14px}
+    .inp[aria-invalid=true]{border-color:var(--red-bright)}
+    .field-error{margin:6px 0 0;color:var(--red-bright);font-size:13px}
+    .contact-hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+    .contact-form .btn{justify-self:start}
+    .contact-form .btn:disabled{opacity:.6;cursor:progress}
+    .contact-status{font-size:14px;line-height:1.5}
+    .contact-status:empty{display:none}
+    .contact-status.is-ok{color:var(--olive);border:1px solid rgba(184,187,38,.4);background:rgba(184,187,38,.12);border-radius:10px;padding:10px 12px}
+    .contact-status.is-error{color:var(--red-bright);border:1px solid var(--red-bright);border-radius:10px;padding:10px 12px}
+    .contact-privacy,.contact-alt{margin:16px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+    .contact-alt{margin-top:8px}
+    .contact-alt a{text-decoration:underline;text-underline-offset:2px;color:var(--cream)}
+    .placeholder-note{color:var(--yellow)}
     #latest-writing{margin-top:32px}
     .preview-banner{background:var(--bg-soft);color:var(--text);font-size:12px;text-align:center;padding:6px 12px;border-bottom:1px solid var(--line)}
     .home-blocks a,.prose a,#cv-summary-view a{text-decoration:underline;text-underline-offset:2px}
@@ -332,14 +348,32 @@
             <section id="content-4" class="tab-content wrap">
                 <h2 class="title">Contact</h2>
                 <div class="card">
-                    <p style="margin-top:0">Email <a class="contact-email" href="mailto:elly.okinyo@gmail.com">elly.okinyo@gmail.com</a>. You can also use the form; it opens your email app, addressed to me.</p>
-                    <div class="grid2" style="gap:14px">
-                        <input id="c-first" class="inp" placeholder="First name">
-                        <input id="c-last" class="inp" placeholder="Last name">
-                    </div>
-                    <input id="c-email" class="inp" placeholder="Your email" style="margin-top:14px">
-                    <textarea id="c-msg" class="inp" placeholder="Message" style="margin-top:14px;min-height:120px"></textarea>
-                    <button onclick="sendMail()" class="btn btn-accent" style="margin-top:16px"><i class="fa-solid fa-paper-plane"></i> Send</button>
+                    <p style="margin-top:0">Send me a message with the form below and I will reply to the email address you give.</p>
+                    <form id="contact-form" class="contact-form" novalidate aria-describedby="contact-privacy">
+                        <div class="contact-field">
+                            <label for="c-name">Name</label>
+                            <input id="c-name" name="name" class="inp" type="text" autocomplete="name" maxlength="100" required aria-describedby="c-name-error">
+                            <p id="c-name-error" class="field-error" hidden></p>
+                        </div>
+                        <div class="contact-field">
+                            <label for="c-email">Your email address (for my reply)</label>
+                            <input id="c-email" name="email" class="inp" type="email" autocomplete="email" maxlength="254" required aria-describedby="c-email-error">
+                            <p id="c-email-error" class="field-error" hidden></p>
+                        </div>
+                        <div class="contact-field">
+                            <label for="c-msg">Message</label>
+                            <textarea id="c-msg" name="message" class="inp" maxlength="5000" required aria-describedby="c-msg-error" style="min-height:140px"></textarea>
+                            <p id="c-msg-error" class="field-error" hidden></p>
+                        </div>
+                        <div class="contact-hp" aria-hidden="true">
+                            <label for="c-website">Leave this field empty</label>
+                            <input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off">
+                        </div>
+                        <button id="contact-send" type="submit" class="btn btn-accent"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Send</button>
+                        <div id="contact-status" class="contact-status" role="status" aria-live="polite"></div>
+                    </form>
+                    <p id="contact-privacy" class="contact-privacy">What is stored: the name, email address and message you type, and the time you send them, in my Firebase (Google) database, so that I can reply. The form sets no cookies and stores nothing on your device. <span class="placeholder-note" data-placeholder="retention">[PLACEHOLDER: retention period, for Elly to decide before go-live]</span></p>
+                    <p class="contact-alt">Prefer another way? Find me on <a href="https://www.linkedin.com/in/elly-okinyo/" target="_blank" rel="me noopener">LinkedIn</a> or <a href="https://x.com/e_okinyo" target="_blank" rel="noopener">X</a>.</p>
                 </div>
             </section>
 
@@ -350,9 +384,9 @@
                     <a href="https://github.com/eokinyo" target="_blank" rel="me noopener" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
                     <a href="https://www.linkedin.com/in/elly-okinyo/" target="_blank" rel="me noopener" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
                     <a href="https://x.com/e_okinyo" target="_blank" rel="noopener" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
-                    <a href="mailto:elly.okinyo@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+                    <a href="#contact" aria-label="Contact form"><i class="fa-solid fa-envelope" aria-hidden="true"></i></a>
                 </div>
-                <div class="privacy-note">Visit counts are anonymised and no personal data is stored.</div>
+                <div class="privacy-note">Visit counts are anonymised and no personal data is stored. The contact form stores what you type in it (see the Contact page).</div>
             </footer>
         </main>
     </div>
@@ -892,14 +926,7 @@ function sortCvEntries(entries, dateField) {
         window.scrollTo(0,0);
         if(window.EOCounter && !isLocalPreview() && !isOwner) EOCounter.track(p.slug, {pageLoad: p.slug===INITIAL_POST});
     }
-    /* ---- contact ---- */
-    function sendMail(){
-        function v(id){ return document.getElementById(id).value.trim(); }
-        const name=(v("c-first")+" "+v("c-last")).trim();
-        const subject="Website message"+(name?(" from "+name):"");
-        const body="Name: "+name+"\nEmail: "+v("c-email")+"\n\n"+v("c-msg");
-        window.location.href="mailto:elly.okinyo@gmail.com?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
-    }
+    /* ---- contact: see /contact.js ---- */
 
     /* ---- init ---- */
     function showPreviewBanner(){
