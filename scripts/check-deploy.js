@@ -59,6 +59,17 @@ required.forEach(function (name) {
   if (reason) problems.push(name + " is " + reason);
 });
 
+/* The contact form's privacy line carries a marked placeholder for the retention
+   period until Elly decides. Publishing it would show the placeholder text. */
+try {
+  const home = fs.readFileSync(path.join(dir, "index.html"), "utf8");
+  if (home.indexOf("data-placeholder=") !== -1 || home.indexOf("[PLACEHOLDER") !== -1) {
+    problems.push("index.html still contains a [PLACEHOLDER ...] marker (contact form retention wording); replace it with Elly's wording first");
+  }
+} catch (e) {
+  problems.push("index.html is unreadable");
+}
+
 if (problems.length) {
   console.error("Deploy stopped.");
   console.error("Folder: " + dir);
