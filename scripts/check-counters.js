@@ -137,5 +137,5 @@ async function main(argv, env) {
   return 0;
 }
 
-if (require.main === module) main(process.argv.slice(2), process.env).then(function (code) { process.exit(code); });
+if (require.main === module) main(process.argv.slice(2), process.env).then(function (code) { process.exitCode = code; }); /* exitCode, not process.exit(): on Windows (Node 24) exiting with fetch sockets still closing trips a libuv assertion (0xC0000409) */
 module.exports = { articleSlugs: articleSlugs, projectConfig: projectConfig, counterUrl: counterUrl, missingCounters: missingCounters, parseArgs: parseArgs, readCounterFields: readCounterFields, main: main };
