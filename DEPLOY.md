@@ -15,7 +15,23 @@ firebase deploy --only hosting
 2. `node scripts/test-public-surface.js` — stops if the homepage or any other file that hosting would upload contains owner-tool copy, or if `/owner-ui.js` would be uploaded.
 3. `node scripts/publish-owner-ui.js` — writes `scripts/owner-ui.js` into the Firestore document `private/ownerUi` using the `firebase login` account. Hosting does not upload that file. If this step cannot sign in, the deploy stops so the live site is not left without editing tools.
 
-Firestore rules already allow only the owner to read `private/**`. This deploy does not change rules and does not use Cloud Functions. A machine that is not logged in (`firebase login`) cannot publish that document; do not deploy hosting from there.
+Firestore rules already allow only the owner to read `private/**`. This deploy does not change rules and does not use Cloud Functions. Rules are published separately (see "Contact form" below). A machine that is not logged in (`firebase login`) cannot publish that document; do not deploy hosting from there.
+
+## Contact form (`contact.js`, Firestore collection `contactMessages`)
+
+The Contact page has a form instead of an email address. `contact.js` writes one document per message to `contactMessages` (fields: `name`, `email`, `message`, `createdAt`) with the same plain REST call as `counter.js`. The `contactMessages` block in `firestore.rules` lets visitors create such a document only, with size limits, and never read, update or delete one. You read the messages in the Firebase console (Firestore Database, `contactMessages`).
+
+Decisions made on 9 Nov 2026 (https://github.com/eokinyo/team-ops/issues/87#issuecomment-6739718961):
+
+- Notifications are manual Firebase console checks. No Blaze plan and no extension.
+- Spam protection is none for now beyond the size caps, field checks and honeypot already in this change. No automatic deletion.
+- Publishing order, on your PC: publish `firestore.rules` first, then `npm run build` if that script applies, then `firebase deploy --only hosting`.
+
+Publish `firestore.rules` in the Firebase console (Firestore Database, Rules: paste the file and publish). `firebase.json` has no `firestore` entry, so `firebase deploy --only hosting` never touches rules. This repo has no `package.json`, so there is no `npm run build` step to run. Then, on your PC, run `firebase deploy --only hosting`. If hosting goes first, the form shows its "could not be sent" message and nothing is stored.
+
+The privacy line says messages are kept only until they are no longer needed, and are reviewed once a year. `scripts/check-deploy.js` still stops the deploy if `index.html` contains a `[PLACEHOLDER` marker or a `data-placeholder` attribute. That check passes with the wording above in place. `scripts/test-public-surface.js` stops the deploy if any uploaded file contains a `mailto:` link with an address, a gmail.com address or an obfuscated address.
+
+Rules tests (no sign-in, local emulator): `npm install --no-save firebase-tools@15 @firebase/rules-unit-testing@4 firebase@11`, then `npx firebase emulators:exec --config scripts/rules-test.firebase.json --only firestore --project demo-hub "node scripts/test-contact-rules.mjs"`.
 
 ## After deploy
 
