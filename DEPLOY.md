@@ -9,13 +9,38 @@ firebase login
 firebase deploy --only hosting
 ```
 
-`firebase login` is only needed if this machine is not already logged in. The deploy runs three checks before upload:
+`firebase login` is only needed if this machine is not already logged in. The deploy runs these steps before upload:
 
-1. `node scripts/check-deploy.js` — stops if `config.js` or `elly.jpg` is missing or empty, or if the hosting ignore list does not contain `.git/**`.
-2. `node scripts/test-public-surface.js` — stops if the homepage or any other file that hosting would upload contains owner-tool copy, or if `/owner-ui.js` would be uploaded.
-3. `node scripts/publish-owner-ui.js` — writes `scripts/owner-ui.js` into the Firestore document `private/ownerUi` using the `firebase login` account. Hosting does not upload that file. If this step cannot sign in, the deploy stops so the live site is not left without editing tools.
+1. `node scripts/build-writing-index.js` — rebuilds `writing/index.json`, the Writing list, from the meta tags of every `writing/*.html` page. Stops and names the page if one lacks a tag or has a bad date or category (see "Writing list" below).
+2. `node scripts/build-writing-index.js --check` — writes nothing. Stops if `writing/index.json` is missing, out of date, or lacks a `writing/*.html` page, or if a page is missing from `sitemap.xml`.
+3. `node scripts/check-deploy.js` — stops if `config.js` or `elly.jpg` is missing or empty, or if the hosting ignore list does not contain `.git/**`.
+4. `node scripts/test-public-surface.js` — stops if the homepage or any other file that hosting would upload contains owner-tool copy, or if `/owner-ui.js` would be uploaded.
+5. `node scripts/publish-owner-ui.js` — writes `scripts/owner-ui.js` into the Firestore document `private/ownerUi` using the `firebase login` account. Hosting does not upload that file. If this step cannot sign in, the deploy stops so the live site is not left without editing tools.
 
 Firestore rules already allow only the owner to read `private/**`. This deploy does not change rules and does not use Cloud Functions. Rules are published separately (see "Contact form" below). A machine that is not logged in (`firebase login`) cannot publish that document; do not deploy hosting from there.
+
+## Writing list (`writing/index.json`)
+
+The pages in `writing/` are the source of truth for the Writing list. The Writing grid and "Latest writing" on the home page show the Firestore posts in `public/blog` merged with `/writing/index.json` by slug (team-ops #99):
+
+- A page with no Firestore post is listed from its meta tags, with its description as the excerpt. Opening it goes to `/writing/<slug>.html`, and an old `#post/<slug>` link redirects there.
+- A Firestore post with the same slug keeps its title and body, and gets the page's URL for its share link.
+- If `/writing/index.json` cannot be loaded, the list falls back to the Firestore posts only.
+- The owner tools still edit and save only `public/blog`; the merged list is never saved.
+
+Each `writing/<slug>.html` must have these meta tags, as the existing pages do:
+
+| Tag | Field | Rule |
+|---|---|---|
+| `<meta property="og:title">` | title | not empty |
+| `<meta property="article:published_time">` | date | `YYYY-MM-DD` |
+| `<meta property="article:section">` | category | `Economics` or `Notes` (stored lower case) |
+| `<meta name="description">` | description | not empty |
+| `<meta property="og:url">` | url | `https://ellyokinyo.com/writing/<slug>.html` |
+
+**New article:** add `writing/<slug>.html` with those tags, its images in `writing/img/<slug>/` and its `sitemap.xml` entry, then run `node scripts/build-writing-index.js` and commit `writing/index.json` with the page. The deploy rebuilds the file anyway and stops if anything disagrees. `node scripts/add-article.js` is now optional: it only puts a full Markdown copy of the post in Firestore `public/blog` and creates the read counter field. Without that counter field, `firestore.rules` does not let visitors count reads of the new article (see "Read counts" below).
+
+Tests: `node scripts/test-writing-index.js` (manifest fields, `--check` failures on temporary copies, the merge, and the `firebase.json` wiring).
 
 ## Contact form (`contact.js`, Firestore collection `contactMessages`)
 
@@ -57,10 +82,22 @@ curl -sI https://ellyokinyo.com/scripts/owner-ui.js
 
 The first command should print `clean`. `/owner-ui.js` and `/scripts/owner-ui.js` should be `404`, and the body of `/owner-ui.js` should print `clean`. Local preview (`node scripts/preview-server.js`, then `http://127.0.0.1:4173/?owner`) still loads the editing tools. That server is not the live site.
 
+## Tests
+
+No packages, no network:
+
+```bash
+node scripts/test-writing-index.js
+node scripts/test-public-surface.js
+node scripts/test-share.js
+node scripts/test-cv-sort.js
+node scripts/build-posts.js --self-test
+```
+
 ## Read counts and no analytics
 
 The site is cookieless and runs no analytics. `node scripts/test-public-surface.js` (a predeploy step) stops the deploy if an uploaded file contains `googletagmanager`, `gtag(`, `google-analytics`, `firebase-analytics` or `getAnalytics(`.
 
 `counter.js` counts article reads in the Firestore document `counters/site` (`total` plus one field per article slug). It counts after 15 seconds visible, skips reloads, back/forward visits and obvious bots, and stores nothing on the device. Counts show only from 50 reads per article and 500 for the site total. The `counters` block in `firestore.rules` lets visitors add only +1 to `total` and one existing article field, at most once every 6 seconds; concurrent reads inside that gap are retried once and otherwise dropped.
 
-New article page: copy an existing page in `writing/`, keep the footer privacy line and set `<script src="/counter.js" data-slug="<slug>" defer></script>` to the new slug. Keep the `<script src="/share.js" defer></script>` line too: it adds the "Share this article" block (Share or Copy link, LinkedIn, X, email) at the end of the article, using the page's canonical URL and title. Writing posts on the home page get the same block automatically. `node scripts/add-article.js <post.json> --write` also creates the slug's counter field at 0 (never resets an existing count). `--counter-only` does just the counter field.
+New article page: copy an existing page in `writing/` (and see "Writing list" above), keep the footer privacy line and set `<script src="/counter.js" data-slug="<slug>" defer></script>` to the new slug. Keep the `<script src="/share.js" defer></script>` line too: it adds the "Share this article" block (Share or Copy link, LinkedIn, X, email) at the end of the article, using the page's canonical URL and title. Writing posts on the home page get the same block automatically. `node scripts/add-article.js <post.json> --write` also creates the slug's counter field at 0 (never resets an existing count). `--counter-only` does just the counter field.

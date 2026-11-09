@@ -831,7 +831,61 @@ function sortCvEntries(entries, dateField) {
         }).join(""):'<p class="empty" style="text-align:left">Nothing added yet.</p>';
     }
     /* ---- writing (public) ---- */
-    let blog=[], blogFilter="all";
+    /* blog: the Firestore list (owner tools edit and save only this). writingIndex: /writing/index.json.
+       The Writing grid and "Latest writing" show writingPosts(), the two merged by slug. */
+    let blog=[], writingIndex=[], blogFilter="all";
+    /* writing-merge:start */
+var WRITING_SLUG_RE = /^[A-Za-z0-9_-]+$/;
+
+/* "/writing/<slug>.html" for a same-site article url, otherwise "". */
+function writingPagePath(url) {
+  var m = String(url || "").match(/^(?:https:\/\/(?:www\.)?ellyokinyo\.com)?(\/writing\/[A-Za-z0-9_-]+\.html)$/);
+  return m ? m[1] : "";
+}
+
+function mergeWriting(blog, manifest) {
+  var out = [], index = {};
+  (Array.isArray(blog) ? blog : []).forEach(function (p) {
+    if (!p || typeof p !== "object") return;
+    var copy = {};
+    for (var k in p) if (Object.prototype.hasOwnProperty.call(p, k)) copy[k] = p[k];
+    out.push(copy);
+    if (copy.slug && !Object.prototype.hasOwnProperty.call(index, copy.slug)) index[copy.slug] = copy;
+  });
+  (Array.isArray(manifest) ? manifest : []).forEach(function (e) {
+    if (!e || typeof e !== "object") return;
+    var slug = String(e.slug || "");
+    var path = writingPagePath(e.url);
+    if (!WRITING_SLUG_RE.test(slug) || path !== "/writing/" + slug + ".html") return;
+    if (Object.prototype.hasOwnProperty.call(index, slug)) {
+      if (!index[slug].url) index[slug].url = String(e.url);
+      return;
+    }
+    var post = {
+      slug: slug,
+      title: String(e.title || ""),
+      date: String(e.date || ""),
+      category: e.category === "notes" ? "notes" : "economics",
+      body: String(e.description || ""),
+      url: String(e.url),
+      staticOnly: true
+    };
+    index[slug] = post;
+    out.push(post);
+  });
+  out.sort(function (a, b) { return String(b.date || "").localeCompare(String(a.date || "")); });
+  return out;
+}
+    /* writing-merge:end */
+    function writingPosts(){ return mergeWriting(blog, writingIndex); }
+    async function loadWritingIndex(){
+        try {
+            const r=await withTimeout(fetch("/writing/index.json", {cache:"no-cache"}), 6000);
+            if(!r.ok) throw new Error("HTTP "+r.status);
+            const v=await withTimeout(r.json(), 6000);
+            return Array.isArray(v)?v:[];
+        } catch(e){ console.warn("Writing list (writing/index.json) not loaded:", e.message); return []; }
+    }
     function postCategory(p){ return p && p.category==="notes" ? "notes" : "economics"; }
     function categoryLabel(c){ return c==="notes" ? "Notes from Helsinki" : "Economics"; }
     function excerpt(md){ const t=String(md||"").replace(/[#*_`>\[\]()!-]/g," ").replace(/\s+/g," ").trim(); return t.length>140?t.slice(0,140)+"…":t; }
@@ -867,7 +921,7 @@ function sortCvEntries(entries, dateField) {
             btn.classList.toggle("active", btn.getAttribute("data-filter")===blogFilter);
         });
         const g=document.getElementById("blog-grid");
-        const sorted=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); })
+        const sorted=writingPosts()
             .filter(function(p){ return blogFilter==="all" || postCategory(p)===blogFilter; });
         renderLatestWriting();
         if(!sorted.length){
@@ -887,8 +941,9 @@ function sortCvEntries(entries, dateField) {
     }
     function renderLatestWriting(){
         const el=document.getElementById("latest-writing"); if(!el) return;
-        if(!blog.length){ el.style.display="none"; el.innerHTML=""; return; }
-        const p=blog.slice().sort(function(a,b){ return String(b.date||"").localeCompare(String(a.date||"")); })[0];
+        const posts=writingPosts();
+        if(!posts.length){ el.style.display="none"; el.innerHTML=""; return; }
+        const p=posts[0];
         el.style.display="";
         el.innerHTML='<h3 class="sub">Latest writing</h3>'+
             '<div class="card-title">'+escapeHtml(p.title)+'</div>'+
@@ -902,14 +957,21 @@ function sortCvEntries(entries, dateField) {
         if(/^https:\/\/(www\.)?ellyokinyo\.com\//.test(u)) return u;
         return "https://ellyokinyo.com/#post/"+encodeURIComponent(p.slug);
     }
-    function openPost(slug){ location.hash="post/"+encodeURIComponent(slug); }
+    function openPost(slug){
+        const p=writingPosts().find(function(x){return x.slug===slug;});
+        const page=(p && p.staticOnly)?writingPagePath(p.url):"";
+        if(page){ location.href=page; return; }
+        location.hash="post/"+encodeURIComponent(slug);
+    }
     function closePost(){
         const hash=(blogFilter&&blogFilter!=="all")?"#writing/"+blogFilter:"#writing";
         history.replaceState(null,"", location.pathname+location.search+hash);
         showBlogList();
     }
     function showBlogPost(slug){
-        const p=blog.find(function(x){return x.slug===slug;});
+        const p=writingPosts().find(function(x){return x.slug===slug;});
+        const page=(p && p.staticOnly)?writingPagePath(p.url):"";
+        if(page){ location.replace(page); return; }
         document.getElementById("blog-list").classList.add("hidden");
         document.getElementById("blog-post").classList.remove("hidden");
         const pc=document.getElementById("post-content");
@@ -945,10 +1007,12 @@ function sortCvEntries(entries, dateField) {
             portfolio=Array.isArray(m.portfolio)?m.portfolio:[];
             cv=m.cv||emptyCv;
             blog=Array.isArray(m.blog)?m.blog:[];
+            writingIndex=await loadWritingIndex();
         } else {
             portfolio = await loadDoc("public","portfolio",[]);
             cv = await loadDoc("public","cv",emptyCv);
             blog = await loadDoc("public","blog",[]);
+            writingIndex = await loadWritingIndex();
         }
         renderPortfolio();
         renderCv();
