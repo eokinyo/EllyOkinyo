@@ -11,6 +11,7 @@
      fails, --allow-missing-counter and ALLOW_MISSING_COUNTER allow it, a 404
      doc fails, and an unreachable server warns and exits 0 (exit 1 with
      --require-network) with a clear message.
+   - counter.js display thresholds: 20 reads per article, 100 for the site.
    - firebase.json runs the check in predeploy.
    Not deployed (scripts/ is in hosting.ignore). */
 const fs = require("fs");
@@ -131,6 +132,15 @@ const fsApi = { FieldPath: FieldPath, Timestamp: Timestamp };
   check("unreachable network warns clearly and exits 0", x.code === 0 && /WARNING: could not read counters\/site \(network error: ECONNREFUSED\)\. Read counters were NOT checked/.test(x.out));
   x = await run(["--url", url, "--timeout-ms", "3000", "--require-network"]);
   check("unreachable network fails with --require-network", x.code === 1 && /Counter check failed: could not read counters\/site \(network error: ECONNREFUSED\)/.test(x.out));
+
+  /* ---- display thresholds (counter.js) ---- */
+  const cs = { window: {}, document: { currentScript: null }, console: sandbox.console };
+  cs.window = cs; vm.createContext(cs);
+  vm.runInContext(fs.readFileSync(path.join(root, "counter.js"), "utf8"), cs, { filename: "counter.js" });
+  const E = cs.EOCounter;
+  check("thresholds are 20 per article and 100 for the site", E.ARTICLE_MIN === 20 && E.SITE_MIN === 100);
+  check("article label hidden at 19, shown at 20", E.articleLabel({ articles: { a: 19 } }, "a") === "" && E.articleLabel({ articles: { a: 20 } }, "a") === "20 reads");
+  check("site label hidden at 99, shown at 100", E.siteLabel({ total: 99 }) === "" && E.siteLabel({ total: 100 }) === "100 reads across the site");
 
   /* ---- wiring ---- */
   const C = require("./check-counters.js");
