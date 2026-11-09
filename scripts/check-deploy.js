@@ -59,8 +59,8 @@ required.forEach(function (name) {
   if (reason) problems.push(name + " is " + reason);
 });
 
-/* The contact form's privacy line carries a marked placeholder for the retention
-   period until Elly decides. Publishing it would show the placeholder text. */
+/* Refuse a deploy if a placeholder marker is put back into index.html.
+   The retention wording is already written in the contact privacy line. */
 try {
   const home = fs.readFileSync(path.join(dir, "index.html"), "utf8");
   if (home.indexOf("data-placeholder=") !== -1 || home.indexOf("[PLACEHOLDER") !== -1) {
