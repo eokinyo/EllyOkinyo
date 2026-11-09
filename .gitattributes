@@ -1,2 +1,4 @@
 # Keep firestore.rules byte-identical to the deployed rules (LF), even with core.autocrlf=true
 firestore.rules text eol=lf
+# Predeploy rewrites writing/index.json with LF; keep the checkout LF too so git status stays clean with core.autocrlf=true
+writing/index.json text eol=lf
