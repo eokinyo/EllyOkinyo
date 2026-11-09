@@ -4,6 +4,7 @@
     "predeploy": [
       "node scripts/build-writing-index.js",
       "node scripts/build-writing-index.js --check",
+      "node scripts/check-counters.js",
       "node scripts/check-deploy.js",
       "node scripts/test-public-surface.js",
       "node scripts/publish-owner-ui.js"

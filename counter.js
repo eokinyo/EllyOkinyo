@@ -7,8 +7,8 @@
      visible for 15 seconds. Reloads, back/forward visits and obvious bots are
      not counted. Nothing is stored on the device: no cookies, no
      localStorage, no sessionStorage, no identifiers.
-   - Shows "N reads" only once an article has 50 reads, and
-     "N reads across the site" only once the total reaches 500. Below that,
+   - Shows "N reads" only once an article has 20 reads, and
+     "N reads across the site" only once the total reaches 100. Below that,
      nothing is added to the page.
 
    Firestore rules (firestore.rules, block "counters") accept only +1 on
@@ -20,8 +20,8 @@
    The home page calls window.EOCounter directly. */
 (function () {
   "use strict";
-  var ARTICLE_MIN = 50;
-  var SITE_MIN = 500;
+  var ARTICLE_MIN = 20;
+  var SITE_MIN = 100;
   var VISIBLE_MS = 15000;
   var COUNT_HOSTS = { "ellyokinyo.com": true, "www.ellyokinyo.com": true };
   var BOT_UA = /bot|crawl|spider|slurp|mediapartners|facebookexternalhit|embedly|preview|whatsapp|headless|lighthouse|pagespeed|pingdom|uptime|monitor|phantomjs|selenium|puppeteer|playwright/i;

@@ -95,6 +95,56 @@
        non-owner banner here. */
     function sync(){
         if(isOwner) mount(); else if(mounted()) unmount();
+        if(isOwner && !countersEnsured && typeof db!=="undefined" && db && window.firebase && firebase.firestore){
+            countersEnsured=true;
+            ensureCounterFields(db, firebase.firestore, counterSlugs()).then(function(r){
+                if(r.created) console.info("Read counters: created counters/site with " + r.added.join(", ") + " at 0.");
+                else if(r.added.length) console.info("Read counters: added " + r.added.join(", ") + " at 0. Existing counts unchanged.");
+                else console.info("Read counters: every article already has a counter. Nothing written.");
+            }).catch(function(e){ countersEnsured=false; console.warn("Read counters: could not add missing fields:", e && e.message); });
+        }
+    }
+
+    /* ---- read counters (counters/site) ----
+       When the owner signs in, every article slug from writing/index.json and the
+       Firestore blog gets a field in counters/site. A missing field is created at
+       0 in a transaction; an existing field is never written, so no count is
+       reset. firestore.rules let only the owner add fields; visitors can only
+       add 1 to an existing one. Logged in the browser console. */
+    let countersEnsured=false;
+    const COUNTER_SLUG=/^[A-Za-z0-9_-]+$/;
+    const COUNTER_RESERVED={ total:true, lastWrite:true };
+    function counterSlugs(){
+        const out=[];
+        function add(s){ s=String(s||""); if(COUNTER_SLUG.test(s) && !COUNTER_RESERVED[s] && out.indexOf(s)<0) out.push(s); }
+        (typeof writingIndex!=="undefined" && Array.isArray(writingIndex)?writingIndex:[]).forEach(function(e){ if(e) add(e.slug); });
+        (typeof blog!=="undefined" && Array.isArray(blog)?blog:[]).forEach(function(p){ if(p) add(p.slug); });
+        return out;
+    }
+    /* What to write, given the current counters/site data (null if the doc is missing). */
+    function counterFieldPlan(data, slugs){
+        const clean=(slugs||[]).filter(function(s, i, a){ return COUNTER_SLUG.test(String(s)) && !COUNTER_RESERVED[s] && a.indexOf(s)===i; });
+        if(!data) return { create:true, add:clean };
+        return { create:false, add:clean.filter(function(s){ return !Object.prototype.hasOwnProperty.call(data, s); }) };
+    }
+    /* fs is firebase.firestore (compat): FieldPath and Timestamp. */
+    function ensureCounterFields(database, fs, slugs){
+        const ref=database.collection("counters").doc("site");
+        return database.runTransaction(function(tx){
+            return tx.get(ref).then(function(snap){
+                const plan=counterFieldPlan(snap.exists ? (snap.data()||{}) : null, slugs);
+                if(plan.create){
+                    const init={ total:0, lastWrite:fs.Timestamp.fromMillis(0) };
+                    plan.add.forEach(function(s){ init[s]=0; });
+                    tx.set(ref, init);
+                } else if(plan.add.length){
+                    const args=[];
+                    plan.add.forEach(function(s){ args.push(new fs.FieldPath(s), 0); });
+                    tx.update.apply(tx, [ref].concat(args));
+                }
+                return { created:plan.create, added:plan.add };
+            });
+        });
     }
 
     /* ---- portfolio data (collapsed owner panel) ---- */
@@ -362,6 +412,7 @@
     });
     window.OwnerUI = {
         sync:sync, renderPortfolio:renderOwnerPortfolio,
-        cardParts:cardParts, cvCtrls:cvCtrls, skillDel:skillDel, postCtrls:postCtrls
+        cardParts:cardParts, cvCtrls:cvCtrls, skillDel:skillDel, postCtrls:postCtrls,
+        counterFieldPlan:counterFieldPlan, ensureCounterFields:ensureCounterFields, counterSlugs:counterSlugs
     };
 })();
