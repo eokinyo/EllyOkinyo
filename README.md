@@ -2,7 +2,7 @@
 
 Source code for [ellyokinyo.com](https://ellyokinyo.com), the personal website of Elly Okinyo: research and projects, CV, and writing on economics and economic policy.
 
-It is a static single-page site (HTML, CSS and plain JavaScript) hosted on Firebase Hosting. Articles live in `writing/`, one HTML page each.
+It is a static single-page site (HTML, CSS and plain JavaScript) hosted on Firebase Hosting. Articles live in `writing/`, one HTML page each. Those pages are the source of truth for the Writing list: `node scripts/build-writing-index.js` builds `writing/index.json` from their meta tags, and the deploy stops if the list, the pages and `sitemap.xml` disagree (see [DEPLOY.md](DEPLOY.md#writing-list-writingindexjson)).
 
 ## Articles with public code
 
