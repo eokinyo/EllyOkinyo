@@ -105,7 +105,7 @@ const fsApi = { FieldPath: FieldPath, Timestamp: Timestamp };
 
   body = JSON.stringify({ fields: all });
   let x = await run(["--url", url]);
-  check("check passes when every article has a counter", x.code === 0 && /Counter check passed\. 6 of 6/.test(x.out));
+  check("check passes when every article has a counter", x.code === 0 && x.out.indexOf("Counter check passed. " + slugs.length + " of " + slugs.length) !== -1);
 
   body = JSON.stringify({ fields: some });
   x = await run(["--url", url]);
